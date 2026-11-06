@@ -1,0 +1,4 @@
+# The default rules, with no exclusions. When a test needs a synthetic secret-shaped value,
+# allow that exact value at that exact path here, never a whole directory.
+[extend]
+useDefault = true

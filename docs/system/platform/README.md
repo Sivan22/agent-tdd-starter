@@ -1,0 +1,122 @@
+---
+summary: Hosting, environments, migrations, generated schema files, CI, the documentation tooling and the release gate.
+covers:
+  - vercel.json
+  - pnpm-workspace.yaml
+  - .gitleaks.toml
+  - scripts/security/**
+  - scripts/check-migration-ladder.sh
+  - scripts/verify-release.sh
+  - scripts/gen-types.sh
+  - scripts/dump-schema.sh
+  - scripts/check-schema-drift.sh
+  - scripts/docs/**
+---
+# Platform
+
+## Purpose
+
+Where the application runs and how a change reaches production: environments, migrations, CI,
+the documentation tooling and the release gate. Read it before adding a migration, an environment
+variable, a scheduled job or a release step. [Testing](testing.md) covers the suites; the
+[release runbook](../../runbooks/release.md) has the procedure.
+
+## Behaviour
+
+### Environments
+
+| Environment | What it is |
+| --- | --- |
+| Production | The deployment of `main` against the production Supabase project. |
+| Preview | A deployment of a pull request's branch. It must use a separate database with synthetic data, never production's. |
+| Local | `pnpm dev` against the local Supabase stack this checkout starts (`supabase/config.toml`). |
+| CI | A GitHub runner with its own throwaway local Supabase stack. |
+
+1. The application is a standard Next.js app. `vercel.json` sets the build command for Vercel;
+   another host runs `pnpm build` and `pnpm start`.
+2. Dependencies resolve with a supply-chain cooldown: pnpm takes no release younger than three
+   days (`minimumReleaseAge` in `pnpm-workspace.yaml`), so a hijacked publish is usually pulled
+   before it arrives. Next.js is exempt, because it ships security fixes only in its newest
+   release.
+3. Configuration comes from environment variables. The
+   [environment inventory](../../reference/generated/env.md) lists every variable the code reads
+   and whether `.env.example` documents it.
+
+### Migrations
+
+1. A schema change is a new file `supabase/migrations/<nnnn>_<snake_case>.sql`, numbered one above
+   the highest number on every branch. A pushed migration is never edited.
+2. Supabase applies migrations in order and silently skips any whose number is at or below the
+   highest version already applied, so the ladder above production's applied mark must have no
+   hole. `scripts/check-migration-ladder.sh` refuses a hole, a malformed name and two files under
+   one number, and warns when two live branches claim one number under different names.
+3. Production receives migrations when `main` deploys, through the Supabase GitHub integration or
+   `supabase db push` in the release procedure. A green build does not prove they applied; the
+   [release runbook](../../runbooks/release.md) says how to check.
+4. The current schema is generated, never written: `lib/db/types.gen.ts`
+   (`scripts/gen-types.sh`), and `docs/db/schema.snapshot.sql` with its security digest
+   `docs/db/schema-rls.txt` (`scripts/dump-schema.sh`). `scripts/check-schema-drift.sh`
+   regenerates all three into a temporary folder and fails when any differs.
+   [The database reference](../../db/README.md) explains how to read them.
+
+### CI
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`, in one job:
+install, the secret scan, the production dependency audit, start a local Supabase stack (which
+applies every migration), write `.env` (`scripts/local-env.sh`), schema drift, typecheck, lint,
+the Vitest suite, the Playwright suite and a production build. The Playwright report is uploaded
+when a run fails.
+
+1. The secret scan (`scripts/security/scan-secrets.sh`) runs a pinned, checksum-verified
+   gitleaks (Linux or macOS, x64 or arm64) with the rules in `.gitleaks.toml`, and names the
+   file, line and rule of each finding with the value redacted. It first proves it detects a planted token, then
+   scans the tracked files, then every commit since the pull request's base (the whole history
+   on a repository's first push), so a secret added and removed inside a pull request still
+   fails it.
+2. `pnpm audit --prod --audit-level=high` fails on a known high or critical advisory in a
+   production dependency.
+
+### Documentation tooling
+
+`pnpm docs:check`, `pnpm docs:gen` and `pnpm docs:owed` run `scripts/docs/cli.ts`; the rules live
+in `scripts/docs/model.ts` and are written for readers in [the documentation index](../../README.md).
+`pnpm docs:gen` writes the inventories in `docs/reference/generated/` and the index in
+`docs/README.md`.
+
+### The release gate
+
+`bash scripts/verify-release.sh <applied-mark>` runs, in the foreground and in order: the
+migration ladder, typecheck, lint, schema drift, the Vitest suite and a production build. Each
+step prints its own verdict. It never resets a database.
+
+## Where it lives
+
+| Concern | Code | Database | Test |
+| --- | --- | --- | --- |
+| Migration ladder | `scripts/check-migration-ladder.sh` | `supabase/migrations/` | run it on a planted hole |
+| Generated schema | `scripts/gen-types.sh`, `scripts/dump-schema.sh`, `scripts/check-schema-drift.sh` | the local stack | `pnpm db:check-schema` in CI |
+| Documentation rules | `scripts/docs/model.ts` | none | `tests/docs/` |
+| Release gate | `scripts/verify-release.sh` | the local stack | none |
+| Secret scan | `scripts/security/scan-secrets.sh`, `.gitleaks.toml` | none | its own negative control |
+
+## Invariants
+
+- Generated files match the schema and the code: CI fails on schema drift, and `tests/docs/`
+  fails on stale inventories.
+
+## When it goes wrong
+
+| Symptom | Cause | Check |
+| --- | --- | --- |
+| CI fails the secret scan | A file or a commit in the pull request holds a secret-shaped value | Remove the secret and rotate it; a synthetic test value gets an exact allowlist entry in `.gitleaks.toml` |
+| CI fails on schema drift | A migration changed the schema and the generated files were not regenerated, or were generated on a drifted stack | Regenerate on a clean stack: [local database](../../runbooks/local-database.md) |
+| A deployed feature fails with "relation does not exist" | Its migration was skipped: a number at or below the applied mark | [Release](../../runbooks/release.md#if-it-fails) |
+
+## Open questions
+
+- None.
+
+## Decisions
+
+- [2026-11-06: publish as a public MIT template, with one commit, and keep the secret scan and audit](../../decisions/platform.md#2026-11-06-publish-as-a-public-mit-template-with-one-commit-and-keep-the-secret-scan-and-audit)
+- [2026-11-06: a general template, without a layered security model](../../decisions/platform.md#2026-11-06-a-general-template-without-a-layered-security-model)

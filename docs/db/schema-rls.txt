@@ -1,0 +1,4 @@
+ table | rls | policies | anon_grants |    authed_grants     |    service_grants
+-------+-----+----------+-------------+----------------------+----------------------
+ notes | ON  |        3 | -           | DELETE,INSERT,SELECT | DELETE,INSERT,SELECT
+

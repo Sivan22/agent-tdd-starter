@@ -1,0 +1,16 @@
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+  - esbuild
+
+onlyBuiltDependencies:
+  - supabase
+
+# Supply-chain cooldown: resolve no release younger than three days (in minutes), so a
+# hijacked publish is usually caught and pulled before it reaches the app.
+minimumReleaseAge: 4320
+# Next ships its security fixes only in its newest release; it is exempt so a fix for an
+# exploitable advisory is never held back. docs/system/platform/README.md describes it.
+minimumReleaseAgeExclude:
+  - next
+  - "@next/*"

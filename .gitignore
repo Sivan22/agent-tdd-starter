@@ -1,0 +1,47 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# build and test output
+/.next/
+/out/
+/build
+/coverage
+/playwright-report
+/test-results
+/.playwright
+*.tsbuildinfo
+next-env.d.ts
+
+# environment: only the example is committed
+.env*
+!.env.example
+
+# keys and credentials
+*.pem
+*.key
+
+# platform state
+.vercel
+supabase/.temp
+supabase/.branches
+
+# mission worktrees live inside the root checkout
+.worktrees/
+
+# Playwright storage states and the screenshots a spec writes as evidence
+/e2e/.auth
+/e2e/.artifacts
+
+# Claude Code per-machine state; .claude/agents/ is committed
+.claude/worktrees/
+.claude/settings.local.json
+
+# another package manager's lockfile: this repository uses pnpm
+package-lock.json
+yarn.lock
+
+.DS_Store
+npm-debug.log*
+.pnpm-debug.log*
