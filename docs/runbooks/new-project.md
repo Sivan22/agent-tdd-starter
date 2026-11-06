@@ -14,11 +14,14 @@ Once, when a new repository is created from this one.
 
 ## Steps
 
-1. Create the repository from the template on GitHub, clone it and install:
+1. Create the project with «Deploy with Vercel» in the template's README: it creates the GitHub
+   repository, the Vercel project and the Supabase project together ([deploy](deploy.md)). For
+   code only, without hosting yet, use «Use this template» on GitHub or
+   `gh repo create <owner>/<name> --template Sivan22/agent-tdd-starter --private --clone`.
+   Then clone and install:
 
    ```bash
-   gh repo create <owner>/<name> --template Sivan22/agent-tdd-starter --private --clone
-   cd <name>
+   git clone https://github.com/<owner>/<name>.git && cd <name>
    pnpm install
    pnpm exec playwright install chromium
    ```
@@ -46,13 +49,12 @@ Once, when a new repository is created from this one.
    cases, spec and documents, then delete it in one commit: its migration stays (a pushed
    migration is never removed); add a new migration that drops the table, and remove the code,
    tests and documents. `pnpm docs:check` then shows anything left behind.
-8. Connect hosting: a Supabase project with the GitHub integration (or a release step running
-   `supabase db push`), and a Vercel project or another Node host with the production variables
-   from `.env.example`. Give preview deployments their own database.
-9. Apply the Auth settings to the hosted Supabase project, because `supabase/config.toml` only
-   configures the local stack: the minimum password length, the site URL and redirect URLs, and
-   email confirmation (Authentication settings in the dashboard, or `pnpm supabase config push`
-   from a linked checkout).
+8. Point the README's «Deploy with Vercel» button at your repository (`repository-url`,
+   `project-name`, `repository-name`), or remove the button and its cases in
+   `tests/deploy/deploy-config.test.ts`.
+9. If step 1 did not deploy, follow [deploy](deploy.md) from its first step. Either way, finish
+   its Auth settings and preview database steps: `supabase/config.toml` only configures the local
+   stack.
 10. Protect `main` on GitHub: require pull requests and the CI check.
 
 ## Check it worked

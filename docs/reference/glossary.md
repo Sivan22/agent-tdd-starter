@@ -12,7 +12,7 @@ summary: The words this repository's rules and documents use, and what each mean
 | Failing-first test | A test written before the code, run once to watch it fail for the reason the change addresses. |
 | Evidence | The exact commands a check ran, on which commit and inputs, and their results. |
 | Root checkout | The directory holding the shared `.git`, with `main` checked out. Missions work in worktrees under `.worktrees/`. |
-| Applied mark | The highest migration version production has applied. Supabase skips any migration numbered at or below it. |
+| Applied mark | The highest migration version production has applied. A migration numbered below it can no longer be applied: the production build refuses it. |
 | Migration ladder | The sequence of migration numbers above the applied mark. It must have no hole. |
 | Release gate | `scripts/verify-release.sh`: the ladder, typecheck, lint, schema drift, Vitest and the production build, once, on the candidate about to reach `main`. CI runs the browser suite. |
 | System document | `docs/system/<area>.md`: how an area behaves now, and the code it covers. |

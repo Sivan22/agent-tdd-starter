@@ -132,9 +132,15 @@ the commit message. No reviewer spawns another reviewer.
   app for a friendly message, and enforce with a constraint, a policy or a function.
 - Every schema change is a new numbered file, `supabase/migrations/<nnnn>_<snake_case>.sql`. Never
   change a database by hand, and never edit a pushed migration, not even its comments.
-- Numbers are unique and gapless above production's applied mark, because Supabase silently
-  skips any migration numbered at or below the highest applied version. Before picking a number,
-  check every branch and worktree (`ls .worktrees/*/supabase/migrations | tail`).
+- Pushing `main` applies migrations: the Vercel production build runs `supabase db push` after
+  the app has built (`scripts/migrate-production.sh`). It refuses a migration numbered below the
+  highest one production has applied, and a refusal or a failed migration fails the deployment.
+- Numbers are unique and gapless above production's applied mark, because a number that arrives
+  below the mark can never be applied. Before picking a number, check every branch and worktree
+  (`ls .worktrees/*/supabase/migrations | tail`).
+- A migration works with the code already in production: the previous deployment keeps serving
+  while the new build applies it, and goes on serving if the deployment fails afterwards. Add
+  first, use in a later release, remove last.
   `bash scripts/check-migration-ladder.sh <applied-mark>` refuses a hole, a malformed name and two
   files under one number, and warns when two live branches claim one number.
 - A new table gets RLS enabled, policies, and explicit grants that start from none: Supabase's
@@ -165,7 +171,9 @@ Several sessions may build on one machine at once. These rules keep them out of 
 
 Next.js 16 (App Router, `proxy.ts` instead of `middleware.ts`), React 19, TypeScript, Tailwind CSS
 4, shadcn components on Base UI, Supabase (Postgres with RLS, Auth), Zod 4, Vitest and Playwright,
-pnpm on Node 24. [Architecture](docs/system/architecture.md) explains the layers.
+pnpm on Node 24. GitHub holds the code, Vercel deploys it, and Supabase comes from the Vercel
+Marketplace ([deploy](docs/runbooks/deploy.md)). [Architecture](docs/system/architecture.md)
+explains the layers.
 
 - A page that needs a user starts with `requireUser()`. A change goes through a Server Action
   that parses its input with Zod and writes through the caller's Supabase client, so RLS applies.

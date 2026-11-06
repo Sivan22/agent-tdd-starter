@@ -19,6 +19,17 @@ The stack is Next.js 16, React 19, TypeScript, Tailwind CSS 4 with shadcn on Bas
 (Postgres with row-level security, Auth), Zod, Vitest and Playwright, on pnpm and Node 24. The
 method does not depend on it; [AGENTS.md](AGENTS.md) keeps the stack-specific rules in one section.
 
+## Deploy your own
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSivan22%2Fagent-tdd-starter&project-name=agent-tdd-starter&repository-name=agent-tdd-starter&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
+
+One click creates the whole stack: a copy of this repository in your GitHub account, a Vercel
+project that deploys every push to `main`, and a Supabase project from the Vercel Marketplace
+whose URL, keys and database address Vercel injects. The first production build applies the
+migrations, so the app works as soon as it is live. Two settings remain for you, both in
+[the deploy runbook](docs/runbooks/deploy.md): Supabase Auth's site URL, so confirmation emails
+link back to your app, and a separate database for preview deployments.
+
 ## The loop
 
 ```text

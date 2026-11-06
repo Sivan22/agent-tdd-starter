@@ -77,9 +77,10 @@ suite runs the same check through `tests/docs/`.
 
 ### Runbooks: procedures
 
+- [Deploy](runbooks/deploy.md): Deploy the stack in one click (GitHub, Vercel, Supabase), what each production build does to the database, and the settings that remain.
 - [Local database](runbooks/local-database.md): Start, connect, migrate, regenerate and stop the local Supabase stack, and what never to do to it.
 - [Start a new project from this template](runbooks/new-project.md): Turn a copy of this template into a new project: names, ports, ticket keys, the example feature and the hosting.
-- [Release](runbooks/release.md): Release a reviewed candidate to production by merging main, and check that its migrations applied.
+- [Release](runbooks/release.md): Release a reviewed candidate to production by merging main, and check that its build applied the migrations.
 
 ### Reference
 

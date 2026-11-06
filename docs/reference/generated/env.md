@@ -13,4 +13,5 @@ What each variable means lives with the code that reads it and in the system doc
 | `E2E_PORT` | `playwright.config.ts` | no |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `lib/env.ts`, `tests/helpers.ts` | yes |
 | `NEXT_PUBLIC_SUPABASE_URL` | `lib/env.ts`, `tests/helpers.ts` | yes |
+| `PATH` | `tests/deploy/migrate-production.test.ts` | no |
 | `SUPABASE_SECRET_KEY` | `tests/helpers.ts` | yes |

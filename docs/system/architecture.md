@@ -28,6 +28,7 @@ call or a shared component.
 | Layer | Choice |
 | --- | --- |
 | Runtime | Node 24 and pnpm 10 (`engines`, `packageManager`) |
+| Hosting | Vercel, with Supabase from the Vercel Marketplace ([deploy](../runbooks/deploy.md)) |
 | Framework | Next.js 16 App Router with `proxy.ts` in place of middleware, React 19, TypeScript |
 | Styling and UI | Tailwind CSS 4 (`app/globals.css`), shadcn components on `@base-ui/react` (`components.json`), `lucide-react` icons |
 | Data | Supabase: Postgres with row-level security and Auth, through `@supabase/supabase-js` and `@supabase/ssr` |
