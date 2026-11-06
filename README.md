@@ -26,9 +26,10 @@ method does not depend on it; [AGENTS.md](AGENTS.md) keeps the stack-specific ru
 One click creates the whole stack: a copy of this repository in your GitHub account, a Vercel
 project that deploys every push to `main`, and a Supabase project from the Vercel Marketplace
 whose URL, keys and database address Vercel injects. The first production build applies the
-migrations, so the app works as soon as it is live. Two settings remain for you, both in
-[the deploy runbook](docs/runbooks/deploy.md): Supabase Auth's site URL, so confirmation emails
-link back to your app, and a separate database for preview deployments.
+migrations to the new database. Three settings remain for you, all in
+[the deploy runbook](docs/runbooks/deploy.md): keep the Supabase variables out of preview
+deployments, point Supabase Auth at your URL, and choose whether sign-up needs email
+confirmation.
 
 ## The loop
 
@@ -81,7 +82,7 @@ Run the checks:
 | `pnpm db:check-schema` | The generated schema files match the database |
 | `pnpm docs:check` | The documentation rules |
 | `bash scripts/security/scan-secrets.sh` | Committed secrets, with a negative control |
-| `bash scripts/verify-release.sh <applied-mark>` | The release gate: migration ladder, typecheck, lint, schema drift, Vitest and the production build |
+| `bash scripts/verify-release.sh <applied-mark>` | The release gate: migration ladder, released migrations unchanged, typecheck, lint, schema drift, Vitest and the production build |
 
 ## Where to read next
 

@@ -2,10 +2,11 @@
 # Refuse a release while the migration ladder above production's applied mark has a hole, and
 # warn when two live branches claim the same migration number.
 #
-# Supabase applies migrations in order and silently skips any whose number is at or below the
-# highest version already applied. A hole that ships is therefore not cosmetic: when the missing
-# number merges later, production never runs it. Two branches that each take "the next free
-# number" lose the same way: whichever ships second is skipped.
+# Production applies migrations in order and refuses any numbered below the highest version it
+# has applied (scripts/migrate-production.sh). A hole that ships is therefore not cosmetic: when
+# the missing number merges later, every production deployment fails until it is renumbered.
+# Two branches that each take "the next free number" collide the same way: whichever ships
+# second is refused.
 #
 #   bash scripts/check-migration-ladder.sh <applied-mark>     # e.g. 0007
 #
@@ -30,8 +31,8 @@ if [ -n "$malformed" ]; then
   exit 1
 fi
 
-# Two files under one number in this checkout: whichever applies first wins and the other is
-# skipped, so this is a refusal, not a warning.
+# Two files under one number in this checkout: production records a version once, so the second
+# file can never apply. This is a refusal, not a warning.
 twins="$(ls "$dir" | cut -c1-4 | sort | uniq -d)"
 if [ -n "$twins" ]; then
   echo "refusing: more than one migration file per number:" >&2
@@ -77,13 +78,13 @@ if [ -n "$dupes" ]; then
       [ -n "$f" ] && printf '  %s  %-40s %s\n' "$d" "$b" "$(basename "$f")"
     done
   done
-  echo "whichever reaches production first sets the mark and the other is skipped; renumber one before either ships"
+  echo "whichever reaches production first sets the mark and the other is refused; renumber one before either ships"
 fi
 
 if [ -n "$missing" ]; then
   echo
   echo "refusing: the ladder has a hole at:$missing"
-  echo "shipping now sets production's mark to $last, and every number in the hole would be skipped later."
+  echo "shipping now sets production's mark to $last, and every number in the hole would be refused later."
   echo "merge the missing migrations first, or renumber above $last."
   exit 1
 fi

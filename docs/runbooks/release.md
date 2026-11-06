@@ -18,8 +18,7 @@ or a fast-forward pushed from the root checkout.
 - Every change in the candidate has a passing hostile review and an open pull request
   ([AGENTS.md](../../AGENTS.md)).
 - You know production's applied migration mark: the highest version in Supabase's dashboard,
-  Database, Migrations, or the last version the latest production build log applied. Write down
-  where you read it; never take it from memory.
+  Database, Migrations. Write it down; never take it from memory.
 
 ## Steps
 
@@ -30,7 +29,8 @@ or a fast-forward pushed from the root checkout.
    bash scripts/verify-release.sh <applied-mark>
    ```
 
-   Every step prints PASS; the last line reads «ALL GREEN».
+   Every step prints PASS, among them «released migrations unchanged»; the last line reads
+   «ALL GREEN».
 
 2. List the migrations this release adds, check that no lower number is still waiting on another
    branch, and check that each works with the code already in production:
@@ -48,6 +48,15 @@ or a fast-forward pushed from the root checkout.
 - The production deployment of the merge commit is ready, and the site answers.
 - Supabase's Migrations list ends with the release's highest migration.
 
+## Undo a release
+
+1. In Vercel, Deployments, open the previous production deployment and choose Instant Rollback.
+   It serves that deployment again without building it, so no migration runs and the database
+   keeps its schema, which the previous code already works with.
+2. Fix forward on a branch: a new commit for the code, and a new migration for the schema.
+3. Never revert a commit that added a migration, and never Redeploy an older commit: a build
+   whose tree lacks a migration production applied fails, and CI refuses the revert.
+
 ## If it fails
 
 | Symptom | Meaning | Next step |
@@ -55,9 +64,11 @@ or a fast-forward pushed from the root checkout.
 | The ladder check refuses a hole | A lower-numbered migration is still on another branch | Merge it first, or renumber this release's migrations above it before anything ships |
 | The ladder check refuses more than one file per number | Two missions took the same number | Renumber the one that has not reached production above the highest number |
 | The production build fails while applying migrations | A migration was refused or its SQL failed; production still serves the previous deployment | [Deploy](deploy.md#if-it-fails) |
+| The release misbehaves after it is live | The code or the migration is wrong | [Undo a release](#undo-a-release), then fix forward |
 
 ## Never
 
 - Push `main` without the owner's request, or force-push it.
 - Renumber or edit a migration that already reached production.
 - Apply migrations to production by hand, or pass `--include-all` to get a refused one through.
+- Revert a merged migration, or deploy with the Vercel CLI.

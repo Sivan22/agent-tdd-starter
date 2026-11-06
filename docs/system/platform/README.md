@@ -4,6 +4,7 @@ covers:
   - vercel.json
   - pnpm-workspace.yaml
   - scripts/migrate-production.sh
+  - scripts/check-migrations-immutable.sh
   - .gitleaks.toml
   - scripts/security/**
   - scripts/check-migration-ladder.sh
@@ -48,19 +49,26 @@ variable, a scheduled job or a release step. [Testing](testing.md) covers the su
 
 1. A schema change is a new file `supabase/migrations/<nnnn>_<snake_case>.sql`, numbered one above
    the highest number on every branch. A pushed migration is never edited.
-2. Supabase applies migrations in order and silently skips any whose number is at or below the
-   highest version already applied, so the ladder above production's applied mark must have no
-   hole. `scripts/check-migration-ladder.sh` refuses a hole, a malformed name and two files under
-   one number, and warns when two live branches claim one number under different names.
+2. The ladder above production's applied mark must have no hole: production refuses a migration
+   numbered below the highest version it has applied, so a number that arrives late can never be
+   applied. `scripts/check-migration-ladder.sh` refuses a hole, a malformed name and two files
+   under one number, and warns when two live branches claim one number under different names.
 3. Production receives migrations when `main` deploys. The Vercel build command (`vercel.json`)
    runs `pnpm build`, then `scripts/migrate-production.sh`, which applies pending migrations
-   with `supabase db push` to `POSTGRES_URL_NON_POOLING`. It runs only when `VERCEL_ENV` is
-   `production`; preview and local builds apply nothing. `supabase db push` records each version
+   with `supabase db push` to `MIGRATIONS_DATABASE_URL` when set, else `POSTGRES_URL_NON_POOLING`.
+   Preview, local and CI builds apply nothing. A production build that Vercel's Git integration
+   did not start from `main` (a `vercel --prod` from a checkout) is refused, and so is a build
+   with a database address but no `VERCEL_ENV`. `supabase db push` records each version
    in the database's own ledger and refuses a migration numbered below the highest applied one,
    so a hole in the ladder fails the deployment instead of being skipped. A failed step fails
    the deployment, and production keeps serving the previous one, which is why a migration must
    work with the code already in production.
-4. The current schema is generated, never written: `lib/db/types.gen.ts`
+4. Production's ledger lists every version it applied, so a build whose tree lacks one cannot
+   migrate again. A migration on the base branch is never edited, renamed or deleted:
+   `scripts/check-migrations-immutable.sh` refuses such a change in CI and in the release gate.
+   A release is undone with Vercel's Instant Rollback, which serves the previous deployment
+   without building it.
+5. The current schema is generated, never written: `lib/db/types.gen.ts`
    (`scripts/gen-types.sh`), and `docs/db/schema.snapshot.sql` with its security digest
    `docs/db/schema-rls.txt` (`scripts/dump-schema.sh`). `scripts/check-schema-drift.sh`
    regenerates all three into a temporary folder and fails when any differs.
@@ -69,7 +77,8 @@ variable, a scheduled job or a release step. [Testing](testing.md) covers the su
 ### CI
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`, in one job:
-install, the secret scan, the production dependency audit, start a local Supabase stack (which
+install, the secret scan, the production dependency audit, the check that the base's migrations
+are unchanged, start a local Supabase stack (which
 applies every migration), write `.env` (`scripts/local-env.sh`), schema drift, typecheck, lint,
 the Vitest suite, the Playwright suite and a production build. The Playwright report is uploaded
 when a run fails.
@@ -101,7 +110,8 @@ step prints its own verdict. It never resets a database.
 | Concern | Code | Database | Test |
 | --- | --- | --- | --- |
 | Migration ladder | `scripts/check-migration-ladder.sh` | `supabase/migrations/` | run it on a planted hole |
-| Production migrations | `scripts/migrate-production.sh`, `vercel.json` | the production ledger | `tests/deploy/` |
+| Production migrations | `scripts/migrate-production.sh`, `vercel.json` | the production ledger | `tests/deploy/migrate-production.test.ts` |
+| Released migrations stay as they are | `scripts/check-migrations-immutable.sh` | `supabase/migrations/` | `tests/deploy/migrations-immutable.test.ts` |
 | Generated schema | `scripts/gen-types.sh`, `scripts/dump-schema.sh`, `scripts/check-schema-drift.sh` | the local stack | `pnpm db:check-schema` in CI |
 | Documentation rules | `scripts/docs/model.ts` | none | `tests/docs/` |
 | Release gate | `scripts/verify-release.sh` | the local stack | none |

@@ -18,9 +18,14 @@ ruling and mark the old one "Superseded by". The working rules themselves live i
   (`supabase db push` after `pnpm build`), so a fresh deployment has its schema without a
   dashboard step, and a merge to `main` deploys and migrates together. Supabase's GitHub
   integration is used only for preview branches. Supabase Auth's URLs and the preview database
-  stay manual settings, because the button cannot reach them.
+  stay manual settings, because the button cannot reach them. Rules that follow, also the
+  builder's, awaiting the owner: only Git-started production builds of `main` migrate; a
+  migration works with the code already in production (add first, use later, remove last);
+  a migration on `main` is never edited or deleted, even by a revert (CI refuses it); a release
+  is undone with Vercel's Instant Rollback; the Vercel CLI never deploys.
 - **Where it holds:** `README.md`, `vercel.json`, `scripts/migrate-production.sh`,
-  `tests/deploy/`, [Deploy](../runbooks/deploy.md), [Platform](../system/platform/README.md).
+  `scripts/check-migrations-immutable.sh`, `tests/deploy/`, [Deploy](../runbooks/deploy.md),
+  [Release](../runbooks/release.md), [Platform](../system/platform/README.md).
 
 ## 2026-11-06: publish as a public MIT template, with one commit, and keep the secret scan and audit
 

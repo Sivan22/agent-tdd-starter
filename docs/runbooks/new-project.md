@@ -46,9 +46,10 @@ Once, when a new repository is created from this one.
 6. Replace [the overview](../system/overview.md) with your product's, and write the owner's first
    rulings in `docs/decisions/`.
 7. Keep the notes feature as a reference until your first feature has its own migration, RLS
-   cases, spec and documents, then delete it in one commit: its migration stays (a pushed
-   migration is never removed); add a new migration that drops the table, and remove the code,
-   tests and documents. `pnpm docs:check` then shows anything left behind.
+   cases, spec and documents. Then remove it in two releases, because the previous deployment
+   serves while a new one migrates: first remove its code, tests and documents (its pages are
+   gone from that release); in a later release, add a migration that drops the table. Its
+   original migration stays forever. `pnpm docs:check` shows anything left behind.
 8. Point the README's «Deploy with Vercel» button at your repository (`repository-url`,
    `project-name`, `repository-name`), or remove the button and its cases in
    `tests/deploy/deploy-config.test.ts`.
