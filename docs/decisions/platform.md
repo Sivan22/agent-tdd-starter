@@ -21,7 +21,8 @@ ruling and mark the old one "Superseded by". The working rules themselves live i
   stay manual settings, because the button cannot reach them. Rules that follow, also the
   builder's, awaiting the owner: only Git-started production builds of `main` migrate; a
   migration works with the code already in production (add first, use later, remove last);
-  a migration on `main` is never edited or deleted, even by a revert (CI refuses it); a release
+  a migration on `main` is never edited or deleted, even by a revert (CI refuses it), except one
+  production never applied, named in an `Unapplied-migration: NNNN` commit trailer; a release
   is undone with Vercel's Instant Rollback; the Vercel CLI never deploys.
 - **Where it holds:** `README.md`, `vercel.json`, `scripts/migrate-production.sh`,
   `scripts/check-migrations-immutable.sh`, `tests/deploy/`, [Deploy](../runbooks/deploy.md),

@@ -59,9 +59,39 @@ describe("check-migrations-immutable.sh", () => {
     expect(check()).toMatchObject({ status: 1, out: expect.stringContaining("0001_notes.sql") });
   });
 
-  it("has nothing to compare against an all-zero or unknown base, as on a repository's first push", () => {
+  it("allows fixing or renumbering a migration production never applied, when a commit says so", () => {
+    write("supabase/migrations/0002_tighten.sql", "alter table notes add check (false);\n");
+    git("add", "-A");
+    git("commit", "-q", "-m", "add 0002");
+    const merged = git("rev-parse", "HEAD");
+
+    write("supabase/migrations/0002_tighten.sql", "alter table notes add check (true);\n");
+    git("add", "-A");
+    git("commit", "-q", "-m", "fix 0002", "-m", "Unapplied-migration: 0002");
+    expect(check(merged).status).toBe(0);
+    git("reset", "-q", "--hard", merged);
+
+    git("mv", "supabase/migrations/0002_tighten.sql", "supabase/migrations/0003_tighten.sql");
+    git("commit", "-q", "-m", "renumber 0002", "-m", "Unapplied-migration: 0002");
+    expect(check(merged).status).toBe(0);
+  });
+
+  it("does not let the trailer of one migration excuse another", () => {
+    write("supabase/migrations/0001_notes.sql", "create table notes (id int);\n");
+    git("add", "-A");
+    git("commit", "-q", "-m", "edit 0001", "-m", "Unapplied-migration: 0002");
+    expect(check()).toMatchObject({ status: 1, out: expect.stringContaining("0001_notes.sql") });
+  });
+
+  it("has nothing to compare against an all-zero or empty base, as on a repository's first push", () => {
     for (const none of ["0000000000000000000000000000000000000000", ""]) {
       expect(check(none).status, JSON.stringify(none)).toBe(0);
+    }
+  });
+
+  it("fails on a base it cannot resolve instead of passing unchecked", () => {
+    for (const unknown of ["origin/mian", "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"]) {
+      expect(check(unknown), unknown).toMatchObject({ status: 1, out: expect.stringContaining(unknown) });
     }
   });
 });

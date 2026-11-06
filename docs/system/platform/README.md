@@ -30,7 +30,7 @@ variable, a scheduled job or a release step. [Testing](testing.md) covers the su
 | Environment | What it is |
 | --- | --- |
 | Production | Vercel's deployment of `main`, against the Supabase project the Vercel Marketplace integration created; the integration supplies its variables. |
-| Preview | Vercel's deployment of a pull request's branch. It must use a separate database with synthetic data, never production's: a Supabase Branching branch, or no Supabase variables at all ([deploy](../../runbooks/deploy.md)). |
+| Preview | Vercel's deployment of a pull request's branch. It never receives production's database: the Supabase variables apply to Production only, and Supabase Branching may add a separate database per pull request ([deploy](../../runbooks/deploy.md)). |
 | Local | `pnpm dev` against the local Supabase stack this checkout starts (`supabase/config.toml`). |
 | CI | A GitHub runner with its own throwaway local Supabase stack. |
 
@@ -56,19 +56,23 @@ variable, a scheduled job or a release step. [Testing](testing.md) covers the su
 3. Production receives migrations when `main` deploys. The Vercel build command (`vercel.json`)
    runs `pnpm build`, then `scripts/migrate-production.sh`, which applies pending migrations
    with `supabase db push` to `MIGRATIONS_DATABASE_URL` when set, else `POSTGRES_URL_NON_POOLING`.
-   Preview, local and CI builds apply nothing. A production build that Vercel's Git integration
-   did not start from `main` (a `vercel --prod` from a checkout) is refused, and so is a build
-   with a database address but no `VERCEL_ENV`. `supabase db push` records each version
+   Preview, local and CI builds apply nothing. A production build of another branch than
+   `MAIN_BRANCH` (`main` by default), or one without Git metadata, is refused, and so is a build
+   with a database address but no `VERCEL_ENV`. A Vercel CLI deploy from a local `main` might
+   carry Git metadata and pass, so AGENTS.md forbids CLI deploys. `supabase db push` records each version
    in the database's own ledger and refuses a migration numbered below the highest applied one,
    so a hole in the ladder fails the deployment instead of being skipped. A failed step fails
    the deployment, and production keeps serving the previous one, which is why a migration must
    work with the code already in production.
 4. Production's ledger lists every version it applied, so a build whose tree lacks one cannot
    migrate again. A migration on the base branch is never edited, renamed or deleted:
-   `scripts/check-migrations-immutable.sh` refuses such a change in CI and in the release gate.
-   A release is undone with Vercel's Instant Rollback, which serves the previous deployment
-   without building it.
-5. The current schema is generated, never written: `lib/db/types.gen.ts`
+   `scripts/check-migrations-immutable.sh` refuses such a change in CI and in the release gate,
+   except for a version named in a commit trailer `Unapplied-migration: NNNN`, the documented
+   way to fix a migration production never applied. A release is undone with Vercel's Instant
+   Rollback, which serves the previous deployment without building it.
+5. CI also runs `scripts/check-migration-ladder.sh 0000`, so two pull requests that took the same
+   number, or a number that leaves a hole, fail before they merge.
+6. The current schema is generated, never written: `lib/db/types.gen.ts`
    (`scripts/gen-types.sh`), and `docs/db/schema.snapshot.sql` with its security digest
    `docs/db/schema-rls.txt` (`scripts/dump-schema.sh`). `scripts/check-schema-drift.sh`
    regenerates all three into a temporary folder and fails when any differs.
@@ -78,7 +82,7 @@ variable, a scheduled job or a release step. [Testing](testing.md) covers the su
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`, in one job:
 install, the secret scan, the production dependency audit, the check that the base's migrations
-are unchanged, start a local Supabase stack (which
+are unchanged, the migration-number check, start a local Supabase stack (which
 applies every migration), write `.env` (`scripts/local-env.sh`), schema drift, typecheck, lint,
 the Vitest suite, the Playwright suite and a production build. The Playwright report is uploaded
 when a run fails.

@@ -145,6 +145,10 @@ the commit message. No reviewer spawns another reviewer.
   records every version it applied, and a build without one of them cannot migrate again. CI
   refuses such a change (`scripts/check-migrations-immutable.sh`). Undo a migration with a new
   one; undo a release with Vercel's Instant Rollback ([release](docs/runbooks/release.md)).
+  The one exception is a migration production never applied, such as one whose production build
+  failed: after confirming in Supabase's Migrations list that its version is absent, fix or
+  renumber it in a commit carrying the trailer `Unapplied-migration: NNNN`
+  ([deploy](docs/runbooks/deploy.md#if-it-fails)).
 - A migration works with the code already in production: the previous deployment keeps serving
   while the new build applies it, and goes on serving if the deployment fails afterwards. Add
   first, use in a later release, remove last.
@@ -215,4 +219,5 @@ stack.
 - `git push --force`, history rewrites, or resetting a shared database, unless the owner asks.
 - Editing a pushed migration or a generated file by hand.
 - Deploying with the Vercel CLI (`vercel deploy`, `vercel --prod`): production comes from `main`
-  through GitHub, and its build refuses anything else.
+  through GitHub. The production build refuses other branches, but a CLI deploy from a local
+  `main` could pass it.

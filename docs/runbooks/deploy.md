@@ -31,9 +31,10 @@ is the [release runbook](release.md).
 2. Vercel builds `main`. The build command in `vercel.json` runs `pnpm build`, then
    `scripts/migrate-production.sh`, which applies every migration to the new database with
    `supabase db push`. The build log shows «Applying migration 0001_notes.sql...». The step
-   migrates only a production build of `main` that Vercel's Git integration started, and it
-   needs Vercel's system environment variables, which are exposed by default: leave «Automatically
-   expose System Environment Variables» on.
+   migrates only a production build of `main` that Vercel's Git integration started (set
+   `MAIN_BRANCH` in the Production environment if your production branch has another name), and
+   it needs Vercel's system environment variables, which are exposed by default: leave
+   «Automatically expose System Environment Variables» on.
 
 3. Keep the Supabase variables out of Preview and Development. Open the Vercel project's
    Settings, Environment Variables (or the Supabase connection in the Storage tab) and make sure
@@ -72,11 +73,11 @@ is the [release runbook](release.md).
 | --- | --- | --- |
 | The build fails with «POSTGRES_URL_NON_POOLING is not set» | The Supabase integration is not connected to this project's Production environment | Connect it from the project's Storage tab, then redeploy |
 | The build fails with a connection error while pushing migrations | Vercel's build cannot reach the database address the integration gave | In Supabase's Connect dialog, copy the Session pooler connection string (port 5432) and set it as `MIGRATIONS_DATABASE_URL` in Vercel's Production environment, then redeploy |
-| The build fails with «Found local migration files to be inserted before the last migration on remote database» | A migration is numbered below one production already applied | Renumber it above the highest applied version in a new commit; never pass `--include-all` |
+| The build fails with «Found local migration files to be inserted before the last migration on remote database» | A migration is numbered below one production already applied, so production never applied it | Confirm its version is absent from Supabase's Migrations list, then renumber it above the highest applied version in a commit carrying `Unapplied-migration: NNNN` (its old number); never pass `--include-all` |
 | The build fails with «Remote migration versions not found in local migrations directory» | The tree lacks a migration production applied: a revert, a deleted file, or a redeploy of an older commit | Restore the file from Git history in a new commit; undo releases with Instant Rollback ([release](release.md#undo-a-release)) |
-| The build fails with «production migrates only from builds of main» | A production deployment came from the Vercel CLI or another branch | Deploy through GitHub: merge to `main` |
+| The build fails with «production migrates only from builds of main» | A production deployment came from the Vercel CLI or another branch | Deploy through GitHub: merge to `main`. If your production branch has another name, set `MAIN_BRANCH` to it in Vercel's Production environment |
 | The build fails with «VERCEL_ENV is not» | Vercel's system environment variables are not exposed | Turn «Automatically expose System Environment Variables» back on |
-| The build fails while applying a migration | The SQL failed against production's data | Production keeps serving the previous deployment; fix the migration in a new commit |
+| The build fails while applying a migration («DbPushApplyError») | The SQL failed against production's data; the migration rolled back, and every later build of `main` stops at it | Production keeps serving the previous deployment. Confirm the version is absent from Supabase's Migrations list, then fix that migration in a commit carrying `Unapplied-migration: NNNN`; a new migration after it would never run |
 | The confirmation email links to `localhost` | Auth's site URL is still the default | Step 4 |
 
 ## Never

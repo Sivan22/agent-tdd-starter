@@ -4,8 +4,9 @@
 # the deployment, and production keeps serving the previous one.
 #
 # Only a production build of main that Vercel's Git integration started may migrate production:
-# a preview, a local or CI build, or a `vercel --prod` from someone's checkout applies nothing or
-# is refused. `supabase db push` records each version in the database's own ledger and refuses a
+# a preview, local or CI build applies nothing, and a production build of another branch, or one
+# without Git metadata, is refused. A `vercel --prod` from a local main may carry Git metadata and
+# pass, which is why AGENTS.md forbids CLI deploys. MAIN_BRANCH names another production branch. `supabase db push` records each version in the database's own ledger and refuses a
 # migration numbered below the highest one applied, so a hole in the ladder stops the deployment
 # instead of being skipped.
 #

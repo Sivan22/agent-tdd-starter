@@ -53,8 +53,12 @@ or a fast-forward pushed from the root checkout.
 1. In Vercel, Deployments, open the previous production deployment and choose Instant Rollback.
    It serves that deployment again without building it, so no migration runs and the database
    keeps its schema, which the previous code already works with.
-2. Fix forward on a branch: a new commit for the code, and a new migration for the schema.
-3. Never revert a commit that added a migration, and never Redeploy an older commit: a build
+2. Fix forward on a branch: a new commit for the code, and a new migration for the schema. The
+   fix's production build applies its migrations while the rolled-back deployment still serves,
+   so they must work with that deployment's code too.
+3. After a rollback, Vercel stops promoting new production deployments on its own. Once the fix's
+   deployment is ready and checked, promote it in Vercel, Deployments.
+4. Never revert a commit that added a migration, and never Redeploy an older commit: a build
    whose tree lacks a migration production applied fails, and CI refuses the revert.
 
 ## If it fails
