@@ -27,6 +27,27 @@ ruling and mark the old one "Superseded by". The working rules themselves live i
 - **Where it holds:** [AGENTS.md](../../AGENTS.md#qa-gate), `.claude/agents/qa-tester.md`,
   [the QA runbook](../runbooks/qa.md), [testing](../system/platform/testing.md#the-qa-gate).
 
+## 2026-11-06: one-click deployment on GitHub, Supabase and Vercel
+
+- **Ruling:** Vercel is part of the stack. The README's «Deploy with Vercel» button creates the
+  whole setup in one flow: the repository in the user's GitHub, a Vercel project that deploys
+  `main`, and a Supabase project from the Vercel Marketplace whose variables Vercel injects.
+- **Owner's words:** "and also make it deploy to vercel in one click (if you have supabase
+  integration) its part of the stack", then "the setup is github+supabase+vercel".
+- **How the builder carried it out:** the production build applies migrations itself
+  (`supabase db push` after `pnpm build`), so a fresh deployment has its schema without a
+  dashboard step, and a merge to `main` deploys and migrates together. Supabase's GitHub
+  integration is used only for preview branches. Supabase Auth's URLs and the preview database
+  stay manual settings, because the button cannot reach them. Rules that follow, also the
+  builder's, awaiting the owner: only Git-started production builds of `main` migrate; a
+  migration works with the code already in production (add first, use later, remove last);
+  a migration on `main` is never edited or deleted, even by a revert (CI refuses it), except one
+  production never applied, named in an `Unapplied-migration: NNNN` commit trailer; a release
+  is undone with Vercel's Instant Rollback; the Vercel CLI never deploys.
+- **Where it holds:** `README.md`, `vercel.json`, `scripts/migrate-production.sh`,
+  `scripts/check-migrations-immutable.sh`, `tests/deploy/`, [Deploy](../runbooks/deploy.md),
+  [Release](../runbooks/release.md), [Platform](../system/platform/README.md).
+
 ## 2026-11-06: publish as a public MIT template, with one commit, and keep the secret scan and audit
 
 - **Ruling:** publish the template as the public GitHub repository `Sivan22/agent-tdd-starter`,

@@ -24,6 +24,7 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
 | `tests/unit/` | Pure logic: validation, parsing, formatting. | Nothing |
 | `tests/rls/` | One file per table: what each kind of caller may read and write, asked of the database directly. | The local stack |
 | `tests/docs/` | The documentation checker, on a planted tree and on this repository. | Nothing |
+| `tests/deploy/` | The deployment scripts and settings: the production migration step (with a fake `pnpm`), released-migration immutability (in throwaway repositories), `vercel.json` and the Deploy button. | Nothing |
 | `e2e/*.spec.ts` | Playwright flows through a real browser and a dev server. | The local stack and a browser |
 
 1. `vitest.config.mts` runs every `*.test.ts` outside `e2e/` and `.worktrees/`, one file at a

@@ -259,6 +259,19 @@ export function envNamesIn(source: string): string[] {
     .filter((n) => !seen.has(n) && seen.add(n) !== undefined);
 }
 
+/** The shell's own variables, which are not configuration. */
+const SHELL_OWN = new Set(["BASH_SOURCE", "BASH_REMATCH", "PIPESTATUS", "RANDOM", "LINENO", "SECONDS", "IFS", "HOME", "PATH", "PWD", "OLDPWD", "TMPDIR", "USER", "SHELL"]);
+
+/** The variables a shell script reads: `$NAME` and `${NAME…}`, upper case only. */
+export function shellEnvNamesIn(source: string): string[] {
+  const found = [...source.matchAll(/\$\{?([A-Z][A-Z0-9_]*)/g)].map((m) => ({ name: m[1], index: m.index ?? 0 }));
+  const seen = new Set<string>();
+  return found
+    .sort((a, b) => a.index - b.index)
+    .map((f) => f.name)
+    .filter((n) => !SHELL_OWN.has(n) && !seen.has(n) && seen.add(n) !== undefined);
+}
+
 // ---------------------------------------------------------------- repository
 
 export function repoRoot(): string {
@@ -357,11 +370,11 @@ function envDoc(root: string, files: readonly string[]): string {
       !f.startsWith("tests/docs/"),
   );
   const readers = new Map<string, string[]>();
-  for (const f of sources) {
-    for (const name of envNamesIn(fs.readFileSync(path.join(root, f), "utf8"))) {
-      readers.set(name, [...(readers.get(name) ?? []), f]);
-    }
-  }
+  const record = (names: string[], f: string) => {
+    for (const name of names) readers.set(name, [...(readers.get(name) ?? []), f]);
+  };
+  for (const f of sources) record(envNamesIn(fs.readFileSync(path.join(root, f), "utf8")), f);
+  for (const f of files.filter((x) => /^scripts\/.*\.sh$/.test(x))) record(shellEnvNamesIn(fs.readFileSync(path.join(root, f), "utf8")), f);
   const examplePath = path.join(root, ".env.example");
   const example = new Set(
     fs.existsSync(examplePath) ? [...fs.readFileSync(examplePath, "utf8").matchAll(/^#?\s*([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]) : [],
@@ -379,7 +392,7 @@ function envDoc(root: string, files: readonly string[]): string {
   return (
     header("Every environment variable the code reads, where it is read, and whether .env.example lists it.") +
     "# Environment variables\n\n" +
-    banner("`process.env` and `Deno.env` reads in the application, scripts, tests and root configs") +
+    banner("`process.env` and `Deno.env` reads in the application, scripts, tests and root configs, and the variables `scripts/**/*.sh` read") +
     "\nWhat each variable means lives with the code that reads it and in the system document for that area.\n" +
     table("| Name | Read in | In `.env.example` |\n| --- | --- | --- |", lines, "The code reads no environment variables.")
   );

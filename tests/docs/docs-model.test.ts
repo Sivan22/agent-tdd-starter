@@ -10,6 +10,7 @@ import {
   bucketsFromMigration,
   citedDocPaths,
   envNamesIn,
+  shellEnvNamesIn,
   globToRegExp,
   isLineAnchor,
   owedDocs,
@@ -186,5 +187,17 @@ describe("envNamesIn", () => {
 
   it("finds every name in a computed key", () => {
     expect(envNamesIn('process.env[live ? "LIVE_KEY" : "TEST_KEY"] === "true"')).toEqual(["LIVE_KEY", "TEST_KEY"]);
+  });
+});
+
+describe("shellEnvNamesIn", () => {
+  it("finds the variables a shell script reads, and skips the shell's own", () => {
+    const src = [
+      'if [ "${VERCEL_ENV:-}" != "production" ]; then exit 0; fi',
+      'db="${MIGRATIONS_DATABASE_URL:-${POSTGRES_URL_NON_POOLING:-}}"',
+      'cd "$(dirname "${BASH_SOURCE[0]}")" && echo "$HOME $PATH ${PIPESTATUS[0]}"',
+      'base="$SECRETS_BASE"; local_var="${lower_case:-x}"',
+    ].join("\n");
+    expect(shellEnvNamesIn(src)).toEqual(["VERCEL_ENV", "MIGRATIONS_DATABASE_URL", "POSTGRES_URL_NON_POOLING", "SECRETS_BASE"]);
   });
 });

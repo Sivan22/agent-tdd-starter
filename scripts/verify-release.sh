@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# The release gate: the migration ladder, typecheck, lint, schema drift, Vitest and the
-# production build, in the foreground, on the candidate at the root checkout, once per
-# candidate. CI runs the browser suite. Each step prints its own verdict.
+# The release gate: the migration ladder, unchanged released migrations, typecheck, lint, schema
+# drift, Vitest and the production build, in the foreground, on the candidate at the root
+# checkout, once per candidate. CI runs the browser suite. Each step prints its own verdict.
 #
 #   bash scripts/verify-release.sh <applied-mark>      # production's applied migration, e.g. 0007
 #
@@ -31,6 +31,7 @@ echo "verifying $(git rev-parse --short HEAD) on $(git rev-parse --abbrev-ref HE
 
 # The ladder first: a hole would silently drop migrations whatever the tests say.
 step "migration ladder" bash scripts/check-migration-ladder.sh "$mark"
+step "released migrations unchanged" bash scripts/check-migrations-immutable.sh "origin/${MAIN_BRANCH:-main}"
 step "typecheck" pnpm exec tsc --noEmit
 step "lint" pnpm lint
 step "schema drift" pnpm db:check-schema

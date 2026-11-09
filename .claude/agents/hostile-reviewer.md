@@ -69,7 +69,13 @@ Data and access:
 
 Migrations:
 - A number that is not strictly one above the highest in every branch and worktree, a hole in
-  the ladder, or an edited pushed migration. Run `bash scripts/check-migration-ladder.sh <mark>`.
+  the ladder, or an edited, renamed or deleted migration (a revert counts). Run
+  `bash scripts/check-migration-ladder.sh <mark>` and `bash scripts/check-migrations-immutable.sh <base>`.
+  An `Unapplied-migration: NNNN` trailer without evidence that production's Migrations list
+  lacks that version is a finding.
+- A migration the code already in production cannot run against: a dropped or renamed column,
+  a new NOT NULL without a default, a tightened constraint. The previous deployment serves
+  while the production build applies it.
 - A CHECK constraint or enum re-listed in full where a sibling branch adds to the same list: the
   last merge silently drops the other branch's values.
 - Default privileges left in place: Supabase grants ALL on a new table to `anon`,

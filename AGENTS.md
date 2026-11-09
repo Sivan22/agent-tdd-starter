@@ -160,11 +160,26 @@ request with its reason.
   app for a friendly message, and enforce with a constraint, a policy or a function.
 - Every schema change is a new numbered file, `supabase/migrations/<nnnn>_<snake_case>.sql`. Never
   change a database by hand, and never edit a pushed migration, not even its comments.
-- Numbers are unique and gapless above production's applied mark, because Supabase silently
-  skips any migration numbered at or below the highest applied version. Before picking a number,
-  check every branch and worktree (`ls .worktrees/*/supabase/migrations | tail`).
+- Pushing `main` applies migrations: the Vercel production build of `main` runs `supabase db push`
+  after the app has built (`scripts/migrate-production.sh`). It refuses a migration numbered
+  below the highest one production has applied, and a refusal or a failed migration fails the
+  deployment. No other path changes production's schema.
+- Numbers are unique and gapless above production's applied mark, because a number that arrives
+  below the mark can never be applied. Before picking a number, check every branch and worktree
+  (`ls .worktrees/*/supabase/migrations | tail`).
   `bash scripts/check-migration-ladder.sh <applied-mark>` refuses a hole, a malformed name and two
   files under one number, and warns when two live branches claim one number.
+- A migration on `main` is never edited, renamed or deleted, not even by a revert: production
+  records every version it applied, and a build without one of them cannot migrate again. CI
+  refuses such a change (`scripts/check-migrations-immutable.sh`). Undo a migration with a new
+  one; undo a release with Vercel's Instant Rollback ([release](docs/runbooks/release.md)).
+  The one exception is a migration production never applied, such as one whose production build
+  failed: after confirming in Supabase's Migrations list that its version is absent, fix or
+  renumber it in a commit carrying the trailer `Unapplied-migration: NNNN`
+  ([deploy](docs/runbooks/deploy.md#if-it-fails)).
+- A migration works with the code already in production: the previous deployment keeps serving
+  while the new build applies it, and goes on serving if the deployment fails afterwards. Add
+  first, use in a later release, remove last.
 - A new table gets RLS enabled, policies, and explicit grants that start from none: Supabase's
   default privileges grant ALL to `anon`, `authenticated` and `service_role`, so revoke from all
   three, then grant what the feature needs (`supabase/migrations/0001_notes.sql` is the pattern).
@@ -193,7 +208,9 @@ Several sessions may build on one machine at once. These rules keep them out of 
 
 Next.js 16 (App Router, `proxy.ts` instead of `middleware.ts`), React 19, TypeScript, Tailwind CSS
 4, shadcn components on Base UI, Supabase (Postgres with RLS, Auth), Zod 4, Vitest and Playwright,
-pnpm on Node 24. [Architecture](docs/system/architecture.md) explains the layers.
+pnpm on Node 24. GitHub holds the code, Vercel deploys it, and Supabase comes from the Vercel
+Marketplace ([deploy](docs/runbooks/deploy.md)). [Architecture](docs/system/architecture.md)
+explains the layers.
 
 - A page that needs a user starts with `requireUser()`. A change goes through a Server Action
   that parses its input with Zod and writes through the caller's Supabase client, so RLS applies.
@@ -220,8 +237,9 @@ pnpm on Node 24. [Architecture](docs/system/architecture.md) explains the layers
 | Release gate | `bash scripts/verify-release.sh <applied-mark>` |
 
 CI (`.github/workflows/ci.yml`) runs on pull requests and on pushes to `main`: a secret scan,
-a production dependency audit, schema drift, typecheck, lint, the Vitest suite, the Playwright
-suite and a production build, against a throwaway local Supabase stack.
+a production dependency audit, unchanged released migrations, schema drift, typecheck, lint, the
+Vitest suite, the Playwright suite and a production build, against a throwaway local Supabase
+stack.
 
 ## Never
 
@@ -229,3 +247,6 @@ suite and a production build, against a throwaway local Supabase stack.
 - Committing `.env*` (except `.env.example`), keys or credentials.
 - `git push --force`, history rewrites, or resetting a shared database, unless the owner asks.
 - Editing a pushed migration or a generated file by hand.
+- Deploying with the Vercel CLI (`vercel deploy`, `vercel --prod`): production comes from `main`
+  through GitHub. The production build refuses other branches, but a CLI deploy from a local
+  `main` could pass it.
