@@ -10,6 +10,8 @@ every step of it:
   a test that talks to the database directly.
 - **A hostile review**: a fresh agent that did not write the change tries to break it before
   anyone calls it verified.
+- **A QA gate**: beside the review, a fresh agent uses the app in a real browser as a user does,
+  and puts its verdict and screenshots on the pull request.
 - **Documentation in the same commit**: one document per area that says how it behaves now,
   dated owner rulings beside it, and a checker that fails when they drift from the code.
 - **Release safety**: a migration-ladder check, generated schema files that CI compares against
@@ -37,7 +39,7 @@ method does not depend on it; [AGENTS.md](AGENTS.md) keeps the stack-specific ru
                 checks for what changed + docs in same commit   │
                         │                                       │
                         ▼                                       │
-                hostile review (fresh agent) ── FAIL ───────────┘
+                hostile review + QA (fresh agents) ── FAIL ─────┘
                         │ PASS
                         ▼
                 push branch, open pull request, CI green
@@ -81,6 +83,7 @@ Run the checks:
 | See the worked example end to end | [Notes](docs/system/notes.md): `supabase/migrations/0001_notes.sql`, `tests/rls/notes.test.ts`, `tests/unit/note-input.test.ts`, `e2e/notes.spec.ts` |
 | Understand the documentation system | [The documentation index](docs/README.md) |
 | Run a hostile review | `.claude/agents/hostile-reviewer.md` |
+| Run the QA gate | [The QA runbook](docs/runbooks/qa.md) |
 | Release | [The release runbook](docs/runbooks/release.md) |
 
 ## What is in the box
@@ -89,10 +92,12 @@ Run the checks:
 | --- | --- |
 | `AGENTS.md`, `CLAUDE.md` | The working rules every agent reads first |
 | `.claude/agents/hostile-reviewer.md` | The adversarial reviewer's brief |
+| `.claude/agents/qa-tester.md` | The QA agent's brief |
 | `.github/workflows/ci.yml` | CI: secret scan, dependency audit, and every check against a throwaway Supabase stack |
 | `.github/pull_request_template.md` | The evidence a pull request carries |
 | `docs/` | System documents, decisions, runbooks, reference, schema files, templates |
 | `scripts/docs/` | `docs:check`, `docs:gen` and `docs:owed` |
+| `scripts/qa/` | `qa:host`: the application and a real browser, held open for the QA agent |
 | `scripts/*.sh` | Migration ladder, schema generation and drift, `.env` writer, release gate |
 | `app/`, `components/`, `lib/` | The example app: sign in, private notes |
 | `supabase/` | Local stack configuration and numbered migrations |

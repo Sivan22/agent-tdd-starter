@@ -36,6 +36,12 @@ each with a one-line caption. Before and after when it helps.
 The verdict line, then every finding with its disposition: fixed (how), or rejected (why, until
 the owner rules).
 
+## QA gate
+
+The verdict line and a link to the comment on this pull request, then every problem with its
+disposition: fixed (how), or predates the change (the issue it was filed as). For a change with
+nothing a user can see, the reason QA was skipped.
+
 ## Open questions
 
 Questions for the owner, and what waits on each.

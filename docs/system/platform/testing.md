@@ -3,6 +3,7 @@ summary: How the Vitest and Playwright suites are organised, how tests own their
 covers:
   - vitest.config.mts
   - playwright.config.ts
+  - e2e/dev-server.ts
   - tests/helpers.ts
   - scripts/local-env.sh
 ---
@@ -52,11 +53,31 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
 1. `playwright.config.ts` runs `e2e/*.spec.ts` in Chromium with one worker, 60-second tests and
    15-second assertions.
 2. It starts `next dev` on `127.0.0.1:$E2E_PORT` (default 3100) and never reuses a server it did
-   not start. Give every run its own unused port.
+   not start. Give every run its own unused port. `e2e/dev-server.ts` owns the port (`e2ePort`),
+   the address (`baseUrlFor`) and the command (`devServerArgs`); the QA host starts the same
+   server from the same module.
 3. Specs find elements by role and accessible name, and scope a locator to its form or list
    when the page has more than one match.
 4. A spec saves its screenshots to `e2e/.artifacts/`, which git ignores; attach them to the pull
    request.
+
+### The QA gate
+
+1. A change a user can see passes the QA gate beside the hostile review
+   ([AGENTS.md](../../../AGENTS.md#qa-gate)): a fresh `qa-tester` agent uses the application in a
+   real headless Chromium, step by step, and puts its verdict with screenshots on the pull
+   request. The procedure is [the QA runbook](../../runbooks/qa.md).
+2. `pnpm qa:host` (`scripts/qa/cli.ts`, `scripts/qa/host.ts`) is the gate's host. From the QA
+   agent's own worktree it refuses a Supabase URL that is not on this machine and a port in use,
+   starts the developer server, makes the disposable accounts `qa` and `qa-other` with
+   `createTestUser`, opens a `playwright cli` browser session on `/login` and writes `ready.json`
+   into `QA_DIR` with the address, the commit under test, the session, the cli command and the
+   logins.
+3. It ends on `QA_DIR/stop`, on SIGINT or SIGTERM, or by itself after `QA_HOURS` (3 by default).
+   Ending closes the browser, deletes the accounts and everything they own, and stops the server.
+   `QA_DIR/reopen` opens the browser again.
+4. `QA_DIR` must be an absolute directory outside the worktree, so no evidence lands in a checkout.
+5. CI does not run the gate. The agent's verdict is on the pull request.
 
 ## Where it lives
 
@@ -65,6 +86,8 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
 | Vitest configuration | `vitest.config.mts` | none | every suite |
 | Clients and fixtures | `tests/helpers.ts` | the local stack | `tests/rls/notes.test.ts` |
 | Playwright configuration | `playwright.config.ts` | the local stack | `e2e/notes.spec.ts` |
+| Developer server | `e2e/dev-server.ts` | none | `tests/unit/dev-server.test.ts` |
+| QA gate host | `scripts/qa/host.ts`, `.claude/agents/qa-tester.md` | the local stack | `tests/unit/qa-host.test.ts` |
 | Local `.env` | `scripts/local-env.sh` | `supabase status` | CI |
 
 ## Invariants
@@ -86,4 +109,4 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
 
 ## Decisions
 
-- None yet.
+- [2026-11-09: a QA agent in a real browser, beside the hostile review](../../decisions/platform.md#2026-11-09-a-qa-agent-in-a-real-browser-beside-the-hostile-review)

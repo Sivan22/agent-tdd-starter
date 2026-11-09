@@ -10,7 +10,10 @@ What each variable means lives with the code that reads it and in the system doc
 | Name | Read in | In `.env.example` |
 | --- | --- | --- |
 | `CI` | `playwright.config.ts` | no |
-| `E2E_PORT` | `playwright.config.ts` | no |
+| `E2E_PORT` | `e2e/dev-server.ts` | no |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `lib/env.ts`, `tests/helpers.ts` | yes |
 | `NEXT_PUBLIC_SUPABASE_URL` | `lib/env.ts`, `tests/helpers.ts` | yes |
+| `QA_DIR` | `scripts/qa/host.ts` | no |
+| `QA_HOURS` | `scripts/qa/host.ts` | no |
+| `QA_SESSION` | `scripts/qa/host.ts` | no |
 | `SUPABASE_SECRET_KEY` | `tests/helpers.ts` | yes |
