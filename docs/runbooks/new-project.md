@@ -46,14 +46,16 @@ Once, when a new repository is created from this one.
    cases, spec and documents, then delete it in one commit: its migration stays (a pushed
    migration is never removed); add a new migration that drops the table, and remove the code,
    tests and documents. `pnpm docs:check` then shows anything left behind.
-8. Connect hosting: a Supabase project with the GitHub integration (or a release step running
+8. Fit the QA gate to your product: its sign-in page, its kinds of user and the stand-ins for its
+   external services ([adapting it](qa.md#adapting-it-to-your-project)).
+9. Connect hosting: a Supabase project with the GitHub integration (or a release step running
    `supabase db push`), and a Vercel project or another Node host with the production variables
    from `.env.example`. Give preview deployments their own database.
-9. Apply the Auth settings to the hosted Supabase project, because `supabase/config.toml` only
+10. Apply the Auth settings to the hosted Supabase project, because `supabase/config.toml` only
    configures the local stack: the minimum password length, the site URL and redirect URLs, and
    email confirmation (Authentication settings in the dashboard, or `pnpm supabase config push`
    from a linked checkout).
-10. Protect `main` on GitHub: require pull requests and the CI check.
+11. Protect `main` on GitHub: require pull requests and the CI check.
 
 ## Check it worked
 

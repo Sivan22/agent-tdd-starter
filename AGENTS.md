@@ -36,7 +36,7 @@ ready for review. "Not committed" or "not pushed" is not done. Take these steps 
 
    | Change | Checks |
    | --- | --- |
-   | Application code or UI | The failing-first test, `pnpm tsc --noEmit`, `pnpm lint`, the affected Vitest files, and the affected page in a browser: an e2e spec, or a Playwright script plus a screenshot |
+   | Application code or UI | The failing-first test, `pnpm tsc --noEmit`, `pnpm lint`, the affected Vitest files, and the affected page in a browser: an e2e spec, or a Playwright script plus a screenshot. A change a user can see also passes the [QA gate](#qa-gate) |
    | Schema, RLS, auth, shared infrastructure | All of the above, plus the RLS and database tests of every table touched, and the consumers of the shared behaviour |
    | Scripts, configuration, dependencies, generated files | Run the changed tool, then the checks of whatever it controls |
    | Docs or agent instructions only | `pnpm docs:check`, and a read of every changed instruction for conflicts |
@@ -46,15 +46,20 @@ ready for review. "Not committed" or "not pushed" is not done. Take these steps 
    file, run `pnpm docs:gen` after adding a route, environment variable, bucket, scheduled job or
    package script, and pass `pnpm docs:check`. Never edit `docs/history/` or
    `docs/reference/generated/` by hand.
-5. Pass a [hostile review](#hostile-review).
-6. Commit with a conventional prefix and the owner's decisions in the message, push the branch,
-   and open a pull request with `gh pr create`, not as a draft. Base it on `main`; when the work
+5. Commit on the branch with a conventional prefix and the owner's decisions in the message, then
+   pass a [hostile review](#hostile-review) and, for a change a user can see, the
+   [QA gate](#qa-gate) on that commit. Start the two in one message; they run at the same time. A
+   fix is a new commit that goes to the same reviewer and, when it changes what users see, to the
+   same QA agent.
+6. Push the branch and open a pull request with `gh pr create`, not as a draft. Base it on `main`; when the work
    depends on another unmerged branch, base it on that branch and say so. Fill in
    `.github/pull_request_template.md`: the scope, each check with its result, any migration with
-   the ladder-check result, the hostile verdict with every finding's disposition, and open
-   questions for the owner. Embed screenshots of UI changes, captured from the tested version
+   the ladder-check result, the hostile verdict with every finding's disposition, the QA verdict
+   with every problem's disposition or the reason QA was skipped, and open questions for the
+   owner. Embed screenshots of UI changes, captured from the tested version
    with synthetic data and inspected for secrets before upload; a local path is not evidence a
-   reviewer can see.
+   reviewer can see. Then post the QA agent's report with its evidence as a comment
+   (`gh pr comment --attach`, [the QA runbook](docs/runbooks/qa.md#evidence-on-github)).
 7. Read `gh pr checks <number>` and fix any red run on the branch. To bring in a newer `main`,
    merge it into the branch; a pushed branch is never rebased, because that needs a force-push.
 8. End your report with the pull request's URL.
@@ -76,6 +81,29 @@ an e2e spec; otherwise it audits your quoted evidence. The reviewer returns
 same reviewer the delta; it checks the fixes and their consequences rather than restarting. A
 finding you reject stays listed with your reason until the owner rules, and the ruling goes in
 the commit message. No reviewer spawns another reviewer.
+
+## QA gate
+
+Reading code misses what a user sees, so a change a user can see (a page, a control, copy,
+layout, an export, what a request returns to the screen) also passes the QA gate, at the same
+time as the hostile review. The session spawns a fresh `qa-tester` agent
+(`.claude/agents/qa-tester.md`), never a fork of itself and never the builder, and follows
+[the QA runbook](docs/runbooks/qa.md): the agent gets its own detached worktree at the commit
+under test with `.env` and `node_modules`, the pull request or issue if there is one, the claim
+and what to check, the owner's decisions, an evidence directory outside every worktree and an
+unused port. It brings the application up with `pnpm qa:host`, which holds the developer server
+and a real headless Chromium, makes disposable accounts and removes them at the end, and it uses
+the application through `playwright cli` as a user does, never through a Playwright spec. It
+writes its verdict, `QA: PASS`, `QA: PASS, with earlier problems` or `QA: FAIL`, with its
+screenshots into the evidence directory, and the session posts that comment on the pull request
+once it exists; the agent never writes to GitHub. Fix every problem it confirms the change
+caused, minor ones included, move its worktree to the fixed commit and send the same agent the
+delta. A problem that predates the change is filed as an issue with its evidence and listed in
+the pull request. What QA finds becomes a Playwright spec: the fix's failing-first test replays
+the bounded steps from the QA report, so the suite keeps what QA found. A change with nothing
+visible needs only the review; when the local application cannot show the change, QA checks
+around it and the pull request says what it could not; a skipped QA gate is named in the pull
+request with its reason.
 
 ## Working rules
 
@@ -155,8 +183,8 @@ Several sessions may build on one machine at once. These rules keep them out of 
 
 - Each project's local stack has its own port block (`supabase/config.toml`). Never reset or
   reseed a stack another worktree is using; ask the owner first.
-- Every e2e run uses an unused `E2E_PORT`. Playwright starts its own server and never reuses one
-  it did not start, because a server on that port may be another checkout's code.
+- Every e2e run and QA host uses an unused `E2E_PORT`. Each starts its own server and never
+  reuses one it did not start, because a server on that port may be another checkout's code.
 - When the host provides a resource-admission wrapper for heavy commands (typecheck, lint,
   builds, browser suites), use it and never bypass it. A killed or memory-limited check is
   incomplete: inspect why before retrying. Never kill another session's processes.
@@ -185,6 +213,7 @@ pnpm on Node 24. [Architecture](docs/system/architecture.md) explains the layers
 | Lint | `pnpm lint` |
 | Unit, RLS and docs tests | `pnpm test`, or one file: `pnpm vitest run tests/rls/notes.test.ts` |
 | E2E | `E2E_PORT=<unused-port> pnpm test:e2e e2e/<spec>.spec.ts` |
+| QA host (the QA agent runs it) | `E2E_PORT=<unused-port> QA_DIR=<evidence-dir> pnpm qa:host` |
 | Types and schema | `pnpm gen:types`, `pnpm db:schema`, `pnpm db:check-schema` (clean stack only) |
 | Docs | `pnpm docs:check`, `pnpm docs:owed <base>`, `pnpm docs:gen` |
 | Secret scan | `bash scripts/security/scan-secrets.sh` |

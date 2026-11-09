@@ -15,6 +15,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "qa:host": "tsx scripts/qa/cli.ts",
     "gen:types": "bash scripts/gen-types.sh",
     "db:schema": "bash scripts/dump-schema.sh",
     "db:check-schema": "bash scripts/check-schema-drift.sh",

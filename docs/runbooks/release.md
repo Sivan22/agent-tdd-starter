@@ -14,8 +14,8 @@ or a fast-forward pushed from the root checkout.
 ## Before you start
 
 - The owner has asked for this release. Merging `main` is a production deployment.
-- Every change in the candidate has a passing hostile review and an open pull request
-  ([AGENTS.md](../../AGENTS.md)).
+- Every change in the candidate has a passing hostile review, a QA verdict or a named reason QA
+  was skipped, and an open pull request ([AGENTS.md](../../AGENTS.md)).
 - You know production's applied migration mark: the highest version in its migration ledger,
   read from the Supabase dashboard (Database, Migrations) or with
   `pnpm supabase migration list --linked`. Write down where you read it; never take it from memory.

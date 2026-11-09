@@ -79,6 +79,7 @@ suite runs the same check through `tests/docs/`.
 
 - [Local database](runbooks/local-database.md): Start, connect, migrate, regenerate and stop the local Supabase stack, and what never to do to it.
 - [Start a new project from this template](runbooks/new-project.md): Turn a copy of this template into a new project: names, ports, ticket keys, the example feature and the hosting.
+- [QA gate](runbooks/qa.md): Run the QA gate, a QA agent using the application in a real headless Chromium, beside the hostile review.
 - [Release](runbooks/release.md): Release a reviewed candidate to production by merging main, and check that its migrations applied.
 
 ### Reference
