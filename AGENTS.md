@@ -46,17 +46,20 @@ ready for review. "Not committed" or "not pushed" is not done. Take these steps 
    file, run `pnpm docs:gen` after adding a route, environment variable, bucket, scheduled job or
    package script, and pass `pnpm docs:check`. Never edit `docs/history/` or
    `docs/reference/generated/` by hand.
-5. Pass a [hostile review](#hostile-review) and, for a change a user can see, the
-   [QA gate](#qa-gate). Start the two in one message; they run at the same time.
-6. Commit with a conventional prefix and the owner's decisions in the message, push the branch,
-   and open a pull request with `gh pr create`, not as a draft. Base it on `main`; when the work
+5. Commit on the branch with a conventional prefix and the owner's decisions in the message, then
+   pass a [hostile review](#hostile-review) and, for a change a user can see, the
+   [QA gate](#qa-gate) on that commit. Start the two in one message; they run at the same time. A
+   fix is a new commit that goes to the same reviewer and, when it changes what users see, to the
+   same QA agent.
+6. Push the branch and open a pull request with `gh pr create`, not as a draft. Base it on `main`; when the work
    depends on another unmerged branch, base it on that branch and say so. Fill in
    `.github/pull_request_template.md`: the scope, each check with its result, any migration with
    the ladder-check result, the hostile verdict with every finding's disposition, the QA verdict
    with every problem's disposition or the reason QA was skipped, and open questions for the
    owner. Embed screenshots of UI changes, captured from the tested version
    with synthetic data and inspected for secrets before upload; a local path is not evidence a
-   reviewer can see.
+   reviewer can see. Then post the QA agent's report with its evidence as a comment
+   (`gh pr comment --attach`, [the QA runbook](docs/runbooks/qa.md#evidence-on-github)).
 7. Read `gh pr checks <number>` and fix any red run on the branch. To bring in a newer `main`,
    merge it into the branch; a pushed branch is never rebased, because that needs a force-push.
 8. End your report with the pull request's URL.
@@ -90,11 +93,11 @@ under test with `.env` and `node_modules`, the pull request or issue if there is
 and what to check, the owner's decisions, an evidence directory outside every worktree and an
 unused port. It brings the application up with `pnpm qa:host`, which holds the developer server
 and a real headless Chromium, makes disposable accounts and removes them at the end, and it uses
-the application through `playwright cli` as a user does, never through a Playwright spec. Its
-verdict, `QA: PASS`, `QA: PASS, with earlier problems` or `QA: FAIL`, goes on the pull request as
-a comment with the screenshots attached; on a branch with no pull request yet, the session posts
-the report the agent wrote as soon as it opens one. Fix every problem it confirms the change
-caused, minor ones included, move its worktree to the fixed head and send the same agent the
+the application through `playwright cli` as a user does, never through a Playwright spec. It
+writes its verdict, `QA: PASS`, `QA: PASS, with earlier problems` or `QA: FAIL`, with its
+screenshots into the evidence directory, and the session posts that comment on the pull request
+once it exists; the agent never writes to GitHub. Fix every problem it confirms the change
+caused, minor ones included, move its worktree to the fixed commit and send the same agent the
 delta. A problem that predates the change is filed as an issue with its evidence and listed in
 the pull request. What QA finds becomes a Playwright spec: the fix's failing-first test replays
 the bounded steps from the QA report, so the suite keeps what QA found. A change with nothing

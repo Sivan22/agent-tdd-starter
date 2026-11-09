@@ -1,7 +1,7 @@
 import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import "dotenv/config";
-import { baseUrlFor, devServerArgs, e2ePort } from "./e2e/dev-server";
+import { baseUrlFor, devServerCommand, e2ePort } from "./e2e/dev-server";
 
 const PORT = e2ePort();
 const baseURL = baseUrlFor(PORT);
@@ -19,7 +19,7 @@ export default defineConfig({
   use: { baseURL, trace: "on-first-retry" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `pnpm exec next ${devServerArgs(PORT).join(" ")}`,
+    command: devServerCommand(PORT),
     cwd: __dirname,
     url: baseURL,
     // Never test a server this run did not start: it may be another checkout's code.

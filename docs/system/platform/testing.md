@@ -4,6 +4,7 @@ covers:
   - vitest.config.mts
   - playwright.config.ts
   - e2e/dev-server.ts
+  - scripts/qa/**
   - tests/helpers.ts
   - scripts/local-env.sh
 ---
@@ -31,7 +32,8 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
    Supabase variable is missing, and refuses any Supabase URL that is not on this machine.
 3. `tests/helpers.ts` provides `admin` (the secret-key client, which bypasses RLS: for fixtures
    and for reading back what really happened), `anonClient()` (a signed-out caller),
-   `createTestUser(label)` (a fresh confirmed user, signed in), `deleteTestUsers(users)` and
+   `createTestUser(label)` (a fresh confirmed user, signed in, removed again if the sign-in
+   fails), `deleteTestUsers(users)` (tries every user, then reports the first failure) and
    `userIdByEmail(email)`.
 4. Each test owns its data. It creates its users with `createTestUser`, which gives each a unique
    `@test.local` address, and deletes them in `afterAll` or `afterEach`; deleting a user cascades
@@ -65,8 +67,8 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
 
 1. A change a user can see passes the QA gate beside the hostile review
    ([AGENTS.md](../../../AGENTS.md#qa-gate)): a fresh `qa-tester` agent uses the application in a
-   real headless Chromium, step by step, and puts its verdict with screenshots on the pull
-   request. The procedure is [the QA runbook](../../runbooks/qa.md).
+   real headless Chromium, step by step, and writes its verdict with screenshots, which the
+   session posts on the pull request. The procedure is [the QA runbook](../../runbooks/qa.md).
 2. `pnpm qa:host` (`scripts/qa/cli.ts`, `scripts/qa/host.ts`) is the gate's host. From the QA
    agent's own worktree it refuses a Supabase URL that is not on this machine and a port in use,
    starts the developer server, makes the disposable accounts `qa` and `qa-other` with
@@ -75,7 +77,8 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
    logins.
 3. It ends on `QA_DIR/stop`, on SIGINT or SIGTERM, or by itself after `QA_HOURS` (3 by default).
    Ending closes the browser, deletes the accounts and everything they own, and stops the server.
-   `QA_DIR/reopen` opens the browser again.
+   `QA_DIR/reopen` opens the browser again. Each browser command has a time limit, so a wedged
+   browser cannot hold up the cleanup. Accounts it could not delete are reported in its last line.
 4. `QA_DIR` must be an absolute directory outside the worktree, so no evidence lands in a checkout.
 5. CI does not run the gate. The agent's verdict is on the pull request.
 
@@ -84,7 +87,7 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
 | Concern | Code | Database | Test |
 | --- | --- | --- | --- |
 | Vitest configuration | `vitest.config.mts` | none | every suite |
-| Clients and fixtures | `tests/helpers.ts` | the local stack | `tests/rls/notes.test.ts` |
+| Clients and fixtures | `tests/helpers.ts` | the local stack | `tests/rls/notes.test.ts`, `tests/unit/test-helpers.test.ts` |
 | Playwright configuration | `playwright.config.ts` | the local stack | `e2e/notes.spec.ts` |
 | Developer server | `e2e/dev-server.ts` | none | `tests/unit/dev-server.test.ts` |
 | QA gate host | `scripts/qa/host.ts`, `.claude/agents/qa-tester.md` | the local stack | `tests/unit/qa-host.test.ts` |

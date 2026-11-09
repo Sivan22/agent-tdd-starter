@@ -12,19 +12,18 @@ ruling and mark the old one "Superseded by". The working rules themselves live i
 - **Ruling:** the template carries the source project's QA gate. A change a user can see passes
   two gates that run at the same time: the hostile review reads the code, and a fresh `qa-tester`
   agent uses the application in a real headless Chromium, step by step through `playwright cli`,
-  and puts `QA: PASS`, `QA: PASS, with earlier problems` or `QA: FAIL` on the pull request with
-  its screenshots attached. Every problem the change caused is fixed, minor ones included; a
+  and writes `QA: PASS`, `QA: PASS, with earlier problems` or `QA: FAIL` with its screenshots,
+  which the session posts on the pull request. Every problem the change caused is fixed, minor ones included; a
   problem that predates it is filed as an issue. A change with nothing visible needs only the
   review, and a skipped QA gate is named in the pull request with its reason.
 - **Owner's words:** "lets add the idea of the QA agent also to [this template] and open pr".
-- **Why:** reading code misses what a user sees. In the source project's pilot the QA agent found
-  three defects no spec had caught, in its first session, while the code review found different
-  things.
+- **Why:** reading code misses what a user sees, and a spec checks only what someone thought to
+  write.
 - **As the builder carried it to a general template:** this template has no seed and each test
   owns its data, so `pnpm qa:host` makes two disposable accounts and removes them when it stops.
-  It assumes no resource manager around it, so it also ends cleanly on a signal. On a new branch
-  the review and QA finish before the push, so the session posts the agent's report once the pull
-  request exists.
+  It assumes no resource manager around it, so it also ends cleanly on a signal. A mission commits
+  first and gates that commit; the review and QA finish before the push, so the agent writes its
+  report and the session posts it once the pull request exists. The agent never writes to GitHub.
 - **Where it holds:** [AGENTS.md](../../AGENTS.md#qa-gate), `.claude/agents/qa-tester.md`,
   [the QA runbook](../runbooks/qa.md), [testing](../system/platform/testing.md#the-qa-gate).
 

@@ -44,10 +44,10 @@ If the worktree, claim, directory or port is missing, say so and stop.
   stops. When a check needs an account or a record of your own, give it `QA` in its name (for an
   account, an address ending in `@test.local`), use invented details only, and list what you
   created in your report.
-- Never write to hosted data or change anything on GitHub or a hosting service, except your pull
-  request comment (an edit of it included). No credentials, no production data and nothing that
-  looks like a real person in the evidence: read every screenshot before it leaves `dir`, and
-  never copy a password from `ready.json` into your report.
+- Never write to hosted data or change anything on GitHub or a hosting service; the session posts
+  your report. No credentials, no production data and nothing that looks like a real person in
+  the evidence: read every screenshot you keep, and never copy a password from `ready.json` into
+  your report.
 - Report how the application handles a stand-in for an external service only if a user would be
   confused or lose work.
 
@@ -68,8 +68,8 @@ If the worktree, claim, directory or port is missing, say so and stop.
    thing at a time to bound what triggers it, and measure it from the page's own data (the
    accessibility snapshot, the record as the application's own screens show it), not from one
    screenshot.
-6. Stop the host (`touch <dir>/stop`) and wait for `[qa] stopped and cleaned up` in `host.log`,
-   also when a check failed.
+6. Stop the host (`touch <dir>/stop`) and wait for a line starting `[qa] stopped` in `host.log`,
+   also when a check failed. If it says accounts were left behind, name them in your report.
 
 A problem is a crash or error screen; lost or corrupted work; a control that does nothing or the
 wrong thing; a console error; text or layout a user cannot read or use, at desktop or phone
@@ -93,11 +93,10 @@ what happened, and the evidence inline as markdown images whose paths are the fi
 verbatim, and its severity. Write the steps so a Playwright spec can replay them: the fix's
 failing-first test is built from them.
 
-With a pull request, post the comment there with the evidence attached (runbook, "Evidence on
-GitHub"), and nowhere else. With none open yet, post nothing: the session posts `comment.md` when
-it opens the pull request. An exploration posts nothing: the session files the issues from your
+Post nothing yourself. The session that owns the branch posts `comment.md` with its evidence on
+the pull request (runbook, "Evidence on GitHub"), and files the issues from an exploration's
 report.
 
 Reply with: the verdict line; each check's result; each problem with its steps and evidence
-paths; the records you created; the comment's URL if you posted one; and what made the session
-slow or awkward, so the runbook improves.
+paths; the records you created; the path of `comment.md`; and what made the session slow or
+awkward, so the runbook improves.

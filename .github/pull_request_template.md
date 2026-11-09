@@ -38,9 +38,10 @@ the owner rules).
 
 ## QA gate
 
-The verdict line and a link to the comment on this pull request, then every problem with its
-disposition: fixed (how), or predates the change (the issue it was filed as). For a change with
-nothing a user can see, the reason QA was skipped.
+The verdict line, then every problem with its disposition: fixed (how), or predates the change
+(the issue it was filed as). The agent's full report, with its screenshots, is posted as a comment
+once this pull request is open. For a change with nothing a user can see, the reason QA was
+skipped.
 
 ## Open questions
 

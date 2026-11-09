@@ -20,6 +20,8 @@ import { createTestUser, deleteTestUsers, type TestUser } from "../../tests/help
 const ACCOUNT_LABELS = ["qa", "qa-other"];
 const LOGIN_PATH = "/login";
 const SIGNALS = ["SIGINT", "SIGTERM"] as const;
+/** A wedged browser must not hold up the cleanup, the stop file or the deadline. */
+const CLI_TIME_LIMIT_MS = 180_000;
 
 /** The commit under test, which the verdict names: the branch may move while the session runs. */
 function commitUnderTest(): string {
@@ -49,14 +51,15 @@ export async function runQaHost(): Promise<void> {
   /** `playwright cli` run in QA_DIR, where it keeps its files; `open` leaves the session's browser running. */
   const cli = (args: string[]) =>
     new Promise<void>((resolve, reject) => {
-      const child = spawn(playwright, ["cli", `-s=${session}`, ...args], { cwd: dir, stdio: "inherit" });
+      const child = spawn(playwright, ["cli", `-s=${session}`, ...args], { cwd: dir, stdio: "inherit", timeout: CLI_TIME_LIMIT_MS });
       child.once("error", reject);
       child.once("exit", (code) => (code === 0 ? resolve() : reject(new Error(`playwright cli ${args[0]} exited ${code}`))));
     });
 
-  await requireFreePort(port);
+  // A report from a killed session goes first, so a refused start cannot pass for a ready one.
   await mkdir(dir, { recursive: true });
   for (const leftover of [ready, stop, reopen]) await rm(leftover, { force: true });
+  await requireFreePort(port);
 
   // Nothing outside this process cleans up after it, so a signal ends the session as a stop does.
   let signalled = false;
@@ -65,6 +68,7 @@ export async function runQaHost(): Promise<void> {
   };
   for (const signal of SIGNALS) process.on(signal, onSignal);
 
+  let accountsLeft = false;
   try {
     const server = await startDevServer(port);
     const users: TestUser[] = [];
@@ -114,6 +118,9 @@ export async function runQaHost(): Promise<void> {
       await cli(["close"]).catch(() => {});
       try {
         await deleteTestUsers(users);
+      } catch (error) {
+        accountsLeft = true;
+        process.stdout.write(`[qa] could not remove the accounts: ${error instanceof Error ? error.message : error}\n`);
       } finally {
         await server.stop();
       }
@@ -121,5 +128,5 @@ export async function runQaHost(): Promise<void> {
   } finally {
     for (const signal of SIGNALS) process.off(signal, onSignal);
   }
-  process.stdout.write("[qa] stopped and cleaned up\n");
+  process.stdout.write(accountsLeft ? "[qa] stopped, with accounts left behind\n" : "[qa] stopped and cleaned up\n");
 }

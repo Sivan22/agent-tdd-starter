@@ -11,8 +11,8 @@ covers:
 A change a user can see (a page, a control, copy, layout, an export, what a request returns to
 the screen) passes two gates that run at the same time: the hostile review reads the code, and a
 `qa-tester` agent ([definition](../../.claude/agents/qa-tester.md)) uses the application as a
-user does, in a real headless Chromium, step by step, and puts its verdict with screenshots on
-the pull request.
+user does, in a real headless Chromium, step by step, and writes its verdict with screenshots,
+which the session posts on the pull request.
 
 A change with nothing visible (docs, CI, internals whose output is unchanged) needs only the
 review. When the local application cannot show the change, QA checks what it shows around the
@@ -32,8 +32,9 @@ is known working, and QA finds what nobody wrote a spec for.
 
 ### Setup, by the session that owns the branch
 
-1. Give the QA agent its own worktree at the commit under test, so the reviewer keeps the mission
-   worktree for its own checks. With `$root` the root checkout
+1. Commit on the branch; QA tests a commit, and nothing needs pushing first. Give the QA agent its
+   own worktree at that commit, so the reviewer keeps the mission worktree for its own checks.
+   With `$root` the root checkout
    (`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`):
 
    ```bash
@@ -42,8 +43,8 @@ is known working, and QA finds what nobody wrote a spec for.
    cd "$root/.worktrees/qa-<nnn>" && pnpm install --frozen-lockfile
    ```
 
-2. Pick an evidence directory outside every worktree (a session scratchpad or a temporary
-   directory) and an unused application port.
+2. Create an evidence directory outside every worktree (`mkdir -p <dir>`, in a session scratchpad
+   or a temporary directory) and pick an unused application port.
 3. Start a fresh `qa-tester` with the worktree, the pull request or issue if there is one, the
    claim and what to check, the owner's decisions, the directory, the port, and any earlier
    evidence to compare with. Start the `hostile-reviewer` in the same message. If the `qa-tester`
@@ -53,8 +54,8 @@ is known working, and QA finds what nobody wrote a spec for.
    fix that changes what users see, move the QA worktree to the new head
    (`git -C "$root/.worktrees/qa-<nnn>" checkout --detach <sha>`) and send the delta to the same
    QA agent, as the fix delta goes to the same reviewer.
-5. When the pull request opens, post the agent's report if it could not (see
-   [Evidence on GitHub](#evidence-on-github)).
+5. As soon as `gh pr create` returns, post the agent's report
+   ([Evidence on GitHub](#evidence-on-github)), and post its new report after each fix delta.
 6. When the pull request merges or closes, check that `host.log` ends with
    `[qa] stopped and cleaned up` (or `touch <dir>/stop`), then
    `git worktree remove "$root/.worktrees/qa-<nnn>"`.
@@ -64,6 +65,7 @@ is known working, and QA finds what nobody wrote a spec for.
 From the QA worktree, in the background:
 
 ```bash
+mkdir -p <dir>
 E2E_PORT=<port> QA_DIR=<dir> QA_SESSION=qa-<nnn> nohup pnpm qa:host > <dir>/host.log 2>&1 &
 ```
 
@@ -127,13 +129,13 @@ short (one to two megabytes): a flow that moves, not a whole session. Keep `[` a
 text, and read the posted comment back: an image reference still shown as text is an image that
 did not upload; `gh pr comment --edit-last` fixes it.
 
-The agent posts when the pull request already exists. On a new branch the review and QA finish
-before the branch is pushed, so the agent leaves `comment.md` in `<dir>` and the session runs this
-command as soon as it has opened the pull request.
+The session runs this; the QA agent never writes to GitHub. The review and QA finish before the
+branch is pushed, so the agent leaves `comment.md` in `<dir>` and the session posts it as soon as
+it has opened the pull request. Read every image first.
 
 ### From a finding to a spec
 
-An issue a QA agent files, or a problem in its report, has the same parts: what happens; the steps
+An issue the session files from a QA report, or a problem in the report, has the same parts: what happens; the steps
 from sign-in; how often it reproduced and what does not trigger it; before and after screenshots,
 and a video when motion matters; what was expected, citing the document; and the code it points
 at, when known. File only what reproduced in the browser. The fix's failing-first test is a
@@ -148,7 +150,7 @@ The host is one file, and these are the parts a project changes:
 | --- | --- |
 | A different sign-in page | `LOGIN_PATH` in `scripts/qa/host.ts` |
 | Roles or kinds of user | `ACCOUNT_LABELS` and the account setup in `scripts/qa/host.ts`, with what each account needs in the database |
-| An external service (mail, payments, AI) | A stand-in the server turns on from its environment, set in `e2e/dev-server.ts` so the suite and the host stay the same server; list what QA should expect from it in this runbook |
+| An external service (mail, payments, AI) | A stand-in the server turns on from its environment. Put its variables in one constant in `e2e/dev-server.ts` and pass that to both `webServer.env` in `playwright.config.ts` and the `spawn` in `startDevServer`, so the suite and the host stay the same server; list what QA should expect from it in this runbook |
 | A language or time zone of its own | `contextOptions` in the browser configuration in `scripts/qa/host.ts` |
 
 ## Check it worked
@@ -168,6 +170,7 @@ The host is one file, and these are the parts a project changes:
 | `Missing environment variable` or `Tests run only against a local Supabase stack` | The worktree's `.env` is missing or points elsewhere | Copy `.env` from the root checkout; never point it at a hosted project |
 | `the developer server … did not answer` | The first compile took too long, or the server crashed; read `host.log` above it | Rerun once the machine is quieter; a crash is a finding |
 | An account cannot sign in | The stack was reset under the host | Stop the host and start it again; it makes new accounts |
+| `[qa] stopped, with accounts left behind` | The accounts could not be removed, usually because the stack was reset under the host | Nothing to do after a reset; otherwise the line above it gives the reason, and the `@test.local` accounts hold only what the session made |
 | An image reference is shown as text in the posted comment | The attachment did not upload | `gh pr comment --edit-last` with the attachments again |
 
 ## Never

@@ -25,9 +25,16 @@ export function baseUrlFor(port: number): string {
   return `http://127.0.0.1:${port}`;
 }
 
+const NEXT_BIN = "node_modules/.bin/next";
+
 /** The arguments to `next`. */
 export function devServerArgs(port: number): string[] {
   return ["dev", "--hostname", "127.0.0.1", "--port", String(port)];
+}
+
+/** The server as one shell command, run from the repository root. */
+export function devServerCommand(port: number): string {
+  return [NEXT_BIN, ...devServerArgs(port)].join(" ");
 }
 
 /** Fails when something already listens on the port: a neighbour's server would be tested instead. */
@@ -53,7 +60,7 @@ export async function startDevServer(
   { cwd = process.cwd(), readyWithinMs = 180_000 }: { cwd?: string; readyWithinMs?: number } = {},
 ): Promise<DevServer> {
   const url = baseUrlFor(port);
-  const child = spawn(path.join(cwd, "node_modules/.bin/next"), devServerArgs(port), { cwd, stdio: "inherit" });
+  const child = spawn(path.join(cwd, NEXT_BIN), devServerArgs(port), { cwd, stdio: "inherit" });
   let gone = false;
   const exited = new Promise<void>((resolve) => {
     const finish = () => {
@@ -67,11 +74,9 @@ export async function startDevServer(
   const stop = async () => {
     if (gone) return;
     child.kill("SIGTERM");
-    const outcome = await Promise.race([exited.then(() => "exited"), delay(10_000, "timeout")]);
-    if (outcome === "timeout") {
-      child.kill("SIGKILL");
-      await exited;
-    }
+    const kill = setTimeout(() => child.kill("SIGKILL"), 10_000);
+    await exited;
+    clearTimeout(kill);
   };
 
   const deadline = Date.now() + readyWithinMs;

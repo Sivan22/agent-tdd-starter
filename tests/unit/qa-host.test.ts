@@ -5,14 +5,23 @@ import { join } from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { runQaHost } from "../../scripts/qa/host";
 
-const io = vi.hoisted(() => ({ events: [] as string[], serverFails: false, userThatFails: "" }));
+const io = vi.hoisted(() => ({
+  events: [] as string[],
+  cliTimeLimits: [] as (number | undefined)[],
+  portTaken: false,
+  serverFails: false,
+  openFails: false,
+  removalFails: false,
+  userThatFails: "",
+}));
 
 vi.mock("node:child_process", () => ({
   execFileSync: (_git: string, args: string[]) => (args[0] === "rev-parse" ? "abc123\n" : ""),
-  spawn: (_cli: string, args: string[], options: { cwd: string }) => {
+  spawn: (_cli: string, args: string[], options: { cwd: string; timeout?: number }) => {
     io.events.push(`cli ${args.slice(1).join(" ")} in ${options.cwd}`);
+    io.cliTimeLimits.push(options.timeout);
     const child = new EventEmitter();
-    setImmediate(() => child.emit("exit", 0));
+    setImmediate(() => child.emit("exit", args[2] === "open" && io.openFails ? 1 : 0));
     return child;
   },
 }));
@@ -23,12 +32,16 @@ vi.mock("../helpers", () => ({
     return { id: `id-${label}`, email: `${label}@test.local`, password: `pw-${label}`, client: { secretKey: "never in the report" } };
   },
   deleteTestUsers: async (users: readonly { id: string }[]) => {
+    if (io.removalFails) throw new Error("the Auth API refused the removal");
     io.events.push(`users removed: ${users.map((user) => user.id).join(" ")}`);
   },
 }));
 vi.mock("../../e2e/dev-server", async (importActual) => ({
   ...(await importActual<typeof import("../../e2e/dev-server")>()),
-  requireFreePort: async (port: number) => io.events.push(`port ${port} free`),
+  requireFreePort: async (port: number) => {
+    if (io.portTaken) throw new Error(`port ${port} is in use; choose an unused E2E_PORT`);
+    io.events.push(`port ${port} free`);
+  },
   startDevServer: async (port: number) => {
     io.events.push(`server started on ${port}`);
     if (io.serverFails) throw new Error("the developer server did not answer within 120 s");
@@ -39,7 +52,11 @@ vi.mock("../../e2e/dev-server", async (importActual) => ({
 let dir = "";
 beforeEach(() => {
   io.events = [];
+  io.cliTimeLimits = [];
+  io.portTaken = false;
   io.serverFails = false;
+  io.openFails = false;
+  io.removalFails = false;
   io.userThatFails = "";
   dir = mkdtempSync(join(tmpdir(), "qa-host-"));
   vi.stubEnv("QA_DIR", dir);
@@ -129,6 +146,50 @@ it("does not let a report left by a killed session pass for this one", async () 
   io.serverFails = true;
   await expect(runQaHost()).rejects.toThrow("did not answer");
   expect(isReady()).toBe(false);
+});
+
+it("clears a report left by a killed session even when the port is still taken", async () => {
+  writeFileSync(join(dir, "ready.json"), '{"commit":"stale"}');
+  io.portTaken = true;
+  await expect(runQaHost()).rejects.toThrow("is in use");
+  expect(isReady()).toBe(false);
+});
+
+it("removes the accounts and stops the server when the browser cannot open", async () => {
+  io.openFails = true;
+  await expect(runQaHost()).rejects.toThrow("playwright cli open exited 1");
+  expect(io.events.slice(-2)).toEqual(["users removed: id-qa id-qa-other", "server stopped"]);
+  expect(isReady()).toBe(false);
+});
+
+it("gives every browser command a time limit, so a wedged browser cannot block the cleanup", async () => {
+  const run = runQaHost();
+  await untilReady();
+  writeFileSync(join(dir, "stop"), "");
+  await run;
+  expect(io.cliTimeLimits).toHaveLength(2);
+  for (const limit of io.cliTimeLimits) expect(limit).toBeGreaterThan(0);
+});
+
+it("says so when the accounts cannot be removed, and still stops the server", async () => {
+  io.removalFails = true;
+  const written: string[] = [];
+  const write = vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
+    written.push(String(chunk));
+    return true;
+  });
+  try {
+    const run = runQaHost();
+    await untilReady();
+    writeFileSync(join(dir, "stop"), "");
+    await run;
+  } finally {
+    write.mockRestore();
+  }
+  expect(written).toContain("[qa] could not remove the accounts: the Auth API refused the removal\n");
+  expect(written).toContain("[qa] stopped, with accounts left behind\n");
+  expect(written).not.toContain("[qa] stopped and cleaned up\n");
+  expect(io.events.at(-1)).toBe("server stopped");
 });
 
 it("ends by itself after QA_HOURS, as if stopped, when nobody stops it", async () => {

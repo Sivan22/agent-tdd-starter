@@ -3,7 +3,7 @@ import { createServer, type Server } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { baseUrlFor, DEFAULT_E2E_PORT, devServerArgs, e2ePort, requireFreePort, startDevServer } from "../../e2e/dev-server";
+import { baseUrlFor, DEFAULT_E2E_PORT, devServerArgs, devServerCommand, e2ePort, requireFreePort, startDevServer } from "../../e2e/dev-server";
 
 const temporary: string[] = [];
 afterEach(() => {
@@ -65,6 +65,10 @@ describe("the port and address", () => {
     expect(baseUrlFor(3456)).toBe("http://127.0.0.1:3456");
     expect(devServerArgs(3456)).toEqual(["dev", "--hostname", "127.0.0.1", "--port", "3456"]);
   });
+
+  it("spells the command Playwright runs from the same executable and arguments", () => {
+    expect(devServerCommand(3456)).toBe("node_modules/.bin/next dev --hostname 127.0.0.1 --port 3456");
+  });
 });
 
 describe("requireFreePort", () => {
@@ -92,6 +96,14 @@ describe("startDevServer", () => {
     expect((await fetch(server.url)).status).toBe(200);
     await server.stop();
     await expect(fetch(server.url)).rejects.toThrow();
+  });
+
+  it("leaves no timer running once the server has stopped, so the caller can exit at once", async () => {
+    const timers = () => process.getActiveResourcesInfo().filter((kind) => kind === "Timeout").length;
+    const server = await startDevServer(await unusedPort(), { cwd: checkoutWithNext(listensOnItsPort) });
+    const before = timers();
+    await server.stop();
+    expect(timers()).toBeLessThanOrEqual(before);
   });
 
   it("reports a server that exits before it answers", async () => {
