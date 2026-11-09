@@ -69,7 +69,7 @@ If the worktree, claim, directory or port is missing, say so and stop.
    accessibility snapshot, the record as the application's own screens show it), not from one
    screenshot.
 6. Stop the host (`touch <dir>/stop`) and wait for a line starting `[qa] stopped` in `host.log`,
-   also when a check failed. If it says accounts were left behind, name them in your report.
+   also when a check failed. If it says anything was left behind, say what in your report.
 
 A problem is a crash or error screen; lost or corrupted work; a control that does nothing or the
 wrong thing; a console error; text or layout a user cannot read or use, at desktop or phone

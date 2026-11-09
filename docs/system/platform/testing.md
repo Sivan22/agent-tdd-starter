@@ -78,7 +78,8 @@ writing a test. [AGENTS.md](../../../AGENTS.md) says when each check is required
 3. It ends on `QA_DIR/stop`, on SIGINT or SIGTERM, or by itself after `QA_HOURS` (3 by default).
    Ending closes the browser, deletes the accounts and everything they own, and stops the server.
    `QA_DIR/reopen` opens the browser again. Each browser command has a time limit, so a wedged
-   browser cannot hold up the cleanup. Accounts it could not delete are reported in its last line.
+   browser cannot hold up the cleanup. A browser it could not close or accounts it could not
+   delete are named in its last line.
 4. `QA_DIR` must be an absolute directory outside the worktree, so no evidence lands in a checkout.
 5. CI does not run the gate. The agent's verdict is on the pull request.
 

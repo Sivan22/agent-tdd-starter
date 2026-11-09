@@ -11,6 +11,7 @@ const io = vi.hoisted(() => ({
   portTaken: false,
   serverFails: false,
   openFails: false,
+  closeFails: false,
   removalFails: false,
   userThatFails: "",
 }));
@@ -21,7 +22,8 @@ vi.mock("node:child_process", () => ({
     io.events.push(`cli ${args.slice(1).join(" ")} in ${options.cwd}`);
     io.cliTimeLimits.push(options.timeout);
     const child = new EventEmitter();
-    setImmediate(() => child.emit("exit", args[2] === "open" && io.openFails ? 1 : 0));
+    const fails = (args[2] === "open" && io.openFails) || (args[2] === "close" && io.closeFails);
+    setImmediate(() => child.emit("exit", fails ? 1 : 0));
     return child;
   },
 }));
@@ -56,6 +58,7 @@ beforeEach(() => {
   io.portTaken = false;
   io.serverFails = false;
   io.openFails = false;
+  io.closeFails = false;
   io.removalFails = false;
   io.userThatFails = "";
   dir = mkdtempSync(join(tmpdir(), "qa-host-"));
@@ -155,6 +158,15 @@ it("clears a report left by a killed session even when the port is still taken",
   expect(isReady()).toBe(false);
 });
 
+it("leaves a live session's stop and reopen requests alone when it refuses a taken port", async () => {
+  writeFileSync(join(dir, "stop"), "");
+  writeFileSync(join(dir, "reopen"), "");
+  io.portTaken = true;
+  await expect(runQaHost()).rejects.toThrow("is in use");
+  expect(existsSync(join(dir, "stop"))).toBe(true);
+  expect(existsSync(join(dir, "reopen"))).toBe(true);
+});
+
 it("removes the accounts and stops the server when the browser cannot open", async () => {
   io.openFails = true;
   await expect(runQaHost()).rejects.toThrow("playwright cli open exited 1");
@@ -171,8 +183,8 @@ it("gives every browser command a time limit, so a wedged browser cannot block t
   for (const limit of io.cliTimeLimits) expect(limit).toBeGreaterThan(0);
 });
 
-it("says so when the accounts cannot be removed, and still stops the server", async () => {
-  io.removalFails = true;
+/** Runs a session to its stop and returns what the host wrote. */
+async function outputOfASession(): Promise<string[]> {
   const written: string[] = [];
   const write = vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
     written.push(String(chunk));
@@ -186,6 +198,27 @@ it("says so when the accounts cannot be removed, and still stops the server", as
   } finally {
     write.mockRestore();
   }
+  return written;
+}
+
+it("says so when the browser cannot be closed, and still removes the accounts and stops the server", async () => {
+  io.closeFails = true;
+  const written = await outputOfASession();
+  expect(written).toContain("[qa] could not close the browser: playwright cli close exited 1\n");
+  expect(written).toContain("[qa] stopped, with the browser left behind\n");
+  expect(written).not.toContain("[qa] stopped and cleaned up\n");
+  expect(io.events.slice(-2)).toEqual(["users removed: id-qa id-qa-other", "server stopped"]);
+});
+
+it("names both when the browser and the accounts are left behind", async () => {
+  io.closeFails = true;
+  io.removalFails = true;
+  expect(await outputOfASession()).toContain("[qa] stopped, with the browser and accounts left behind\n");
+});
+
+it("says so when the accounts cannot be removed, and still stops the server", async () => {
+  io.removalFails = true;
+  const written = await outputOfASession();
   expect(written).toContain("[qa] could not remove the accounts: the Auth API refused the removal\n");
   expect(written).toContain("[qa] stopped, with accounts left behind\n");
   expect(written).not.toContain("[qa] stopped and cleaned up\n");

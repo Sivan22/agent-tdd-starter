@@ -58,8 +58,9 @@ export async function runQaHost(): Promise<void> {
 
   // A report from a killed session goes first, so a refused start cannot pass for a ready one.
   await mkdir(dir, { recursive: true });
-  for (const leftover of [ready, stop, reopen]) await rm(leftover, { force: true });
+  await rm(ready, { force: true });
   await requireFreePort(port);
+  for (const leftover of [stop, reopen]) await rm(leftover, { force: true });
 
   // Nothing outside this process cleans up after it, so a signal ends the session as a stop does.
   let signalled = false;
@@ -68,7 +69,7 @@ export async function runQaHost(): Promise<void> {
   };
   for (const signal of SIGNALS) process.on(signal, onSignal);
 
-  let accountsLeft = false;
+  const leftBehind: string[] = [];
   try {
     const server = await startDevServer(port);
     const users: TestUser[] = [];
@@ -115,11 +116,14 @@ export async function runQaHost(): Promise<void> {
       }
     } finally {
       await rm(ready, { force: true });
-      await cli(["close"]).catch(() => {});
+      await cli(["close"]).catch((error: unknown) => {
+        leftBehind.push("the browser");
+        process.stdout.write(`[qa] could not close the browser: ${error instanceof Error ? error.message : error}\n`);
+      });
       try {
         await deleteTestUsers(users);
       } catch (error) {
-        accountsLeft = true;
+        leftBehind.push("accounts");
         process.stdout.write(`[qa] could not remove the accounts: ${error instanceof Error ? error.message : error}\n`);
       } finally {
         await server.stop();
@@ -128,5 +132,5 @@ export async function runQaHost(): Promise<void> {
   } finally {
     for (const signal of SIGNALS) process.off(signal, onSignal);
   }
-  process.stdout.write(accountsLeft ? "[qa] stopped, with accounts left behind\n" : "[qa] stopped and cleaned up\n");
+  process.stdout.write(leftBehind.length ? `[qa] stopped, with ${leftBehind.join(" and ")} left behind\n` : "[qa] stopped and cleaned up\n");
 }

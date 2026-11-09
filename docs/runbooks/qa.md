@@ -157,8 +157,9 @@ The host is one file, and these are the parts a project changes:
 
 - `host.log` holds `[qa] READY <url> session <name> at <commit>` and, after the stop, ends with
   `[qa] stopped and cleaned up`.
-- The pull request carries one comment whose first line is `QA: PASS at <commit>`,
-  `QA: PASS, with earlier problems at <commit>` or `QA: FAIL at <commit>`, with its images shown.
+- The pull request carries a comment for each QA report, the last one at the head commit. Each
+  one's first line is `QA: PASS at <commit>`, `QA: PASS, with earlier problems at <commit>` or
+  `QA: FAIL at <commit>`, with its images shown.
 - Nothing still listens on the port.
 
 ## If it fails
@@ -171,6 +172,7 @@ The host is one file, and these are the parts a project changes:
 | `the developer server … did not answer` | The first compile took too long, or the server crashed; read `host.log` above it | Rerun once the machine is quieter; a crash is a finding |
 | An account cannot sign in | The stack was reset under the host | Stop the host and start it again; it makes new accounts |
 | `[qa] stopped, with accounts left behind` | The accounts could not be removed, usually because the stack was reset under the host | Nothing to do after a reset; otherwise the line above it gives the reason, and the `@test.local` accounts hold only what the session made |
+| `[qa] stopped, with the browser left behind` | The browser wedged and would not close in time | Find that session's own process (`pgrep -f "cliDaemon.js <session>"`) and stop only it; never use `kill-all` |
 | An image reference is shown as text in the posted comment | The attachment did not upload | `gh pr comment --edit-last` with the attachments again |
 
 ## Never

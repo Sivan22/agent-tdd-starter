@@ -11,7 +11,7 @@ every step of it:
 - **A hostile review**: a fresh agent that did not write the change tries to break it before
   anyone calls it verified.
 - **A QA gate**: beside the review, a fresh agent uses the app in a real browser as a user does,
-  and puts its verdict and screenshots on the pull request.
+  and its verdict and screenshots go on the pull request.
 - **Documentation in the same commit**: one document per area that says how it behaves now,
   dated owner rulings beside it, and a checker that fails when they drift from the code.
 - **Release safety**: a migration-ladder check, generated schema files that CI compares against
