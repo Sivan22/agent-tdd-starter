@@ -34,17 +34,22 @@ export async function createTestUser(label: string): Promise<TestUser> {
   if (created.error) throw created.error;
   const client = anonClient();
   const signedIn = await client.auth.signInWithPassword({ email, password });
-  if (signedIn.error) throw signedIn.error;
+  if (signedIn.error) {
+    await admin.auth.admin.deleteUser(created.data.user.id);
+    throw signedIn.error;
+  }
   return { id: created.data.user.id, email, password, client };
 }
 
-/** Deleting a user cascades to the rows it owns. */
+/** Deleting a user cascades to the rows it owns. Tries every user, then reports the first failure. */
 export async function deleteTestUsers(users: readonly ({ id: string } | undefined)[]): Promise<void> {
+  let failure: Error | undefined;
   for (const user of users) {
     if (!user) continue;
     const { error } = await admin.auth.admin.deleteUser(user.id);
-    if (error) throw error;
+    failure ??= error ?? undefined;
   }
+  if (failure) throw failure;
 }
 
 /** The id of the account an e2e spec created through the UI, so the spec can remove it. */

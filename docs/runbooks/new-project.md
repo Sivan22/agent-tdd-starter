@@ -50,13 +50,15 @@ Once, when a new repository is created from this one.
    serves while a new one migrates: first remove its code, tests and documents (its pages are
    gone from that release); in a later release, add a migration that drops the table. Its
    original migration stays forever. `pnpm docs:check` shows anything left behind.
-8. Point the README's «Deploy with Vercel» button at your repository (`repository-url`,
+8. Fit the QA gate to your product: its sign-in page, its kinds of user and the stand-ins for its
+   external services ([adapting it](qa.md#adapting-it-to-your-project)).
+9. Point the README's «Deploy with Vercel» button at your repository (`repository-url`,
    `project-name`, `repository-name`), or remove the button and its cases in
    `tests/deploy/deploy-config.test.ts`.
-9. If step 1 did not deploy, follow [deploy](deploy.md) from its first step. Either way, finish
-   its Auth settings and preview database steps: `supabase/config.toml` only configures the local
-   stack.
-10. Protect `main` on GitHub: require pull requests and the CI check.
+10. If step 1 did not deploy, follow [deploy](deploy.md) from its first step. Either way, finish
+    its Auth settings and preview database steps: `supabase/config.toml` only configures the local
+    stack.
+11. Protect `main` on GitHub: require pull requests and the CI check.
 
 ## Check it worked
 

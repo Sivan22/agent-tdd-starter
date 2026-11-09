@@ -10,12 +10,15 @@ What each variable means lives with the code that reads it and in the system doc
 | Name | Read in | In `.env.example` |
 | --- | --- | --- |
 | `CI` | `playwright.config.ts` | no |
-| `E2E_PORT` | `playwright.config.ts` | no |
+| `E2E_PORT` | `e2e/dev-server.ts` | no |
 | `MAIN_BRANCH` | `scripts/check-migration-ladder.sh`, `scripts/migrate-production.sh`, `scripts/verify-release.sh` | no |
 | `MIGRATIONS_DATABASE_URL` | `scripts/migrate-production.sh` | no |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `lib/env.ts`, `tests/helpers.ts` | yes |
 | `NEXT_PUBLIC_SUPABASE_URL` | `lib/env.ts`, `tests/helpers.ts` | yes |
 | `POSTGRES_URL_NON_POOLING` | `scripts/migrate-production.sh` | no |
+| `QA_DIR` | `scripts/qa/host.ts` | no |
+| `QA_HOURS` | `scripts/qa/host.ts` | no |
+| `QA_SESSION` | `scripts/qa/host.ts` | no |
 | `SCHEMA_RLS_OUT` | `scripts/dump-schema.sh` | no |
 | `SCHEMA_SNAPSHOT_OUT` | `scripts/dump-schema.sh` | no |
 | `SECRETS_BASE` | `scripts/security/scan-secrets.sh` | no |

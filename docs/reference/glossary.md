@@ -9,6 +9,7 @@ summary: The words this repository's rules and documents use, and what each mean
 | Owner | The person who decides what the product does, approves every merge, and whose rulings go in `docs/decisions/`. |
 | Builder | The agent or person who writes a mission's code and tests. |
 | Hostile review | A review by a fresh agent that did not write the change and tries to break it (`.claude/agents/hostile-reviewer.md`). Its verdict is PASS or FAIL. |
+| QA gate | A fresh agent that uses the application in a real browser, as a user does, beside the hostile review (`.claude/agents/qa-tester.md`). Its verdict is PASS, PASS with earlier problems, or FAIL, on the pull request. |
 | Failing-first test | A test written before the code, run once to watch it fail for the reason the change addresses. |
 | Evidence | The exact commands a check ran, on which commit and inputs, and their results. |
 | Root checkout | The directory holding the shared `.git`, with `main` checked out. Missions work in worktrees under `.worktrees/`. |

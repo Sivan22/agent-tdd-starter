@@ -15,8 +15,8 @@ or a fast-forward pushed from the root checkout.
 
 - The owner has asked for this release. Merging `main` is a production deployment: Vercel builds
   it, and the build applies its migrations ([deploy](deploy.md)).
-- Every change in the candidate has a passing hostile review and an open pull request
-  ([AGENTS.md](../../AGENTS.md)).
+- Every change in the candidate has a passing hostile review, a QA verdict or a named reason QA
+  was skipped, and an open pull request ([AGENTS.md](../../AGENTS.md)).
 - You know production's applied migration mark: the highest version in Supabase's dashboard,
   Database, Migrations. Write it down; never take it from memory.
 
