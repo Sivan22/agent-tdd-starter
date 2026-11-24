@@ -54,7 +54,7 @@ flowchart TD
 
 </div>
 
-עץ העבודה נוצר בנתיב `.worktrees/<nnn>-<slug>`. המיזוג מתבצע אחרי שכל בדיקות ה־CI עוברות.
+עץ העבודה נוצר בנתיב <span dir="ltr">`.worktrees/<nnn>-<slug>`</span>. המיזוג מתבצע אחרי שכל בדיקות ה־CI עוברות.
 
 ## התחלה מהירה
 
@@ -62,7 +62,7 @@ flowchart TD
 שמשמש את כלי הסכמה.
 
 הריצו את הפקודות הבאות כדי להתקין את התלויות ואת Chromium לבדיקות מקצה לקצה,
-להפעיל את Postgres, את Auth ואת Studio מקומית, ליצור קובץ `.env` מהסביבה הפעילה
+להפעיל את Postgres, את Auth ואת Studio מקומית, ליצור קובץ <span dir="ltr">`.env`</span> מהסביבה הפעילה
 ולהפעיל את שרת הפיתוח. הפורטים של Supabase מוגדרים ב־`supabase/config.toml`,
 והיישום זמין ב־`http://127.0.0.1:3000`.
 
@@ -89,7 +89,7 @@ pnpm dev
 | `pnpm db:check-schema` | התאמה בין קובצי הסכמה שנוצרו אוטומטית למסד הנתונים |
 | `pnpm docs:check` | עמידה בכללי התיעוד |
 | `bash scripts/security/scan-secrets.sh` | איתור סודות שנשמרו בקומיטים, עם מקרה ביקורת שלילי |
-| `bash scripts/verify-release.sh <applied-mark>` | בדיקות שחרור הכוללות רצף מיגרציות, שמירה על מיגרציות שכבר שוחררו, בדיקת טיפוסים, ESLint, התאמת הסכמה למסד, Vitest ובנייה לסביבת הייצור |
+| <span dir="ltr">`bash scripts/verify-release.sh <applied-mark>`</span> | בדיקות שחרור הכוללות רצף מיגרציות, שמירה על מיגרציות שכבר שוחררו, בדיקת טיפוסים, ESLint, התאמת הסכמה למסד, Vitest ובנייה לסביבת הייצור |
 
 ## המשך קריאה
 
@@ -99,7 +99,7 @@ pnpm dev
 | לפתוח פרויקט משלכם מהתבנית | בחרו בכפתור «Use this template» ב־GitHub והמשיכו ל[מדריך לפתיחת פרויקט חדש](docs/runbooks/new-project.md) |
 | לעבור על הדוגמה המלאה | [פתקים](docs/system/notes.md), `supabase/migrations/0001_notes.sql`, `tests/rls/notes.test.ts`, `tests/unit/note-input.test.ts`, `e2e/notes.spec.ts` |
 | להבין איך התיעוד מאורגן | [מפתח התיעוד](docs/README.md) |
-| לערוך סקירה ביקורתית | `.claude/agents/hostile-reviewer.md` |
+| לערוך סקירה ביקורתית | <span dir="ltr">`.claude/agents/hostile-reviewer.md`</span> |
 | לערוך בקרת איכות | [מדריך בקרת האיכות](docs/runbooks/qa.md) |
 | לשחרר גרסה | [מדריך שחרור גרסה](docs/runbooks/release.md) |
 
@@ -108,17 +108,17 @@ pnpm dev
 | נתיב | מה נמצא בו |
 | --- | --- |
 | `AGENTS.md`, `CLAUDE.md` | כללי העבודה שכל סוכן קורא לפני תחילת העבודה |
-| `.claude/agents/hostile-reviewer.md` | הנחיות לסוכן הסקירה הביקורתית |
-| `.claude/agents/qa-tester.md` | הנחיות לסוכן בקרת האיכות |
-| `.github/workflows/ci.yml` | תהליך CI שכולל סריקת סודות, ביקורת תלויות והרצת כל הבדיקות מול סביבת Supabase זמנית |
-| `.github/pull_request_template.md` | תבנית לצירוף תוצאות בדיקה וממצאים לבקשת מיזוג |
-| `docs/` | מסמכי מערכת, החלטות, מדריכי תפעול, חומר עזר, קובצי סכמה ותבניות |
-| `scripts/docs/` | הפקודות `docs:check`, `docs:gen` ו־`docs:owed` |
-| `scripts/qa/` | הפקודה `qa:host`, שמפעילה את היישום ודפדפן אמיתי ומשאירה אותם פתוחים לסוכן בקרת האיכות |
-| `scripts/*.sh` | בדיקות לרצף המיגרציות, יצירת קובצי סכמה ובדיקת התאמתם למסד, יצירת `.env` ובדיקות שחרור גרסה |
-| `app/`, `components/`, `lib/` | יישום לדוגמה עם התחברות ופתקים פרטיים |
-| `supabase/` | הגדרות לסביבה המקומית ומיגרציות ממוספרות |
-| `tests/`, `e2e/` | בדיקות Vitest ו־Playwright |
+| <span dir="ltr">`.claude/agents/hostile-reviewer.md`</span> | הנחיות לסוכן הסקירה הביקורתית |
+| <span dir="ltr">`.claude/agents/qa-tester.md`</span> | הנחיות לסוכן בקרת האיכות |
+| <span dir="ltr">`.github/workflows/ci.yml`</span> | תהליך CI שכולל סריקת סודות, ביקורת תלויות והרצת כל הבדיקות מול סביבת Supabase זמנית |
+| <span dir="ltr">`.github/pull_request_template.md`</span> | תבנית לצירוף תוצאות בדיקה וממצאים לבקשת מיזוג |
+| <span dir="ltr">`docs/`</span> | מסמכי מערכת, החלטות, מדריכי תפעול, חומר עזר, קובצי סכמה ותבניות |
+| <span dir="ltr">`scripts/docs/`</span> | הפקודות `docs:check`, `docs:gen` ו־`docs:owed` |
+| <span dir="ltr">`scripts/qa/`</span> | הפקודה `qa:host`, שמפעילה את היישום ודפדפן אמיתי ומשאירה אותם פתוחים לסוכן בקרת האיכות |
+| `scripts/*.sh` | בדיקות לרצף המיגרציות, יצירת קובצי סכמה ובדיקת התאמתם למסד, יצירת <span dir="ltr">`.env`</span> ובדיקות שחרור גרסה |
+| <span dir="ltr">`app/`, `components/`, `lib/`</span> | יישום לדוגמה עם התחברות ופתקים פרטיים |
+| <span dir="ltr">`supabase/`</span> | הגדרות לסביבה המקומית ומיגרציות ממוספרות |
+| <span dir="ltr">`tests/`, `e2e/`</span> | בדיקות Vitest ו־Playwright |
 
 ## רישיון
 
