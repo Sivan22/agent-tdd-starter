@@ -1,120 +1,127 @@
+<div lang="he" dir="rtl">
+
 # agent-tdd-starter
 
-A starting point for full-stack web applications built by AI coding agents, test first, with a
-human owner in charge. It packages a working method and a small working app that demonstrates
-every step of it:
+תבנית התחלה ליישומי ווב מקצה לקצה, שמפתחים סוכני קוד מבוססי בינה מלאכותית בשיטת
+פיתוח מונחה בדיקות ובהובלת בעל הפרויקט. התבנית כוללת שיטת עבודה ויישום קטן שמדגים
+אותה שלב אחר שלב.
 
-- **Missions** on their own branch and worktree, each ending in a pull request.
-- **Tests first**: the failing test is written and watched fail before the code.
-- **Rules in the database**: row-level security, explicit grants and constraints, each proven by
-  a test that talks to the database directly.
-- **A hostile review**: a fresh agent that did not write the change tries to break it before
-  anyone calls it verified.
-- **A QA gate**: beside the review, a fresh agent uses the app in a real browser as a user does,
-  and its verdict and screenshots go on the pull request.
-- **Documentation in the same commit**: one document per area that says how it behaves now,
-  dated owner rulings beside it, and a checker that fails when they drift from the code.
-- **Release safety**: a migration-ladder check, generated schema files that CI compares against
-  the database, and one release gate.
+- **משימות בענפים נפרדים**. לכל משימה יש ענף ועץ עבודה משלה, ובסופה נפתחת בקשת מיזוג (Pull Request).
+- **בדיקות תחילה**. כותבים בדיקה לפני המימוש ומוודאים שהיא נכשלת מהסיבה הצפויה.
+- **כללים במסד הנתונים**. מדיניות אבטחה ברמת השורה (RLS), הרשאות מפורשות ואילוצים נבדקים ישירות מול המסד.
+- **סקירה ביקורתית**. סוכן שלא כתב את השינוי מנסה למצוא בו תקלות לפני שמכריזים שהוא אומת.
+- **בקרת איכות (QA)**. במקביל לסקירה, סוכן נוסף משתמש ביישום בדפדפן אמיתי כמו משתמש רגיל.
+  תוצאת הבדיקה וצילומי המסך מצורפים לבקשת המיזוג.
+- **תיעוד באותו קומיט**. לכל תחום מסמך שמתאר את ההתנהגות הנוכחית ולצדו החלטות מתוארכות
+  של בעל הפרויקט. בדיקה אוטומטית נכשלת כשמתגלה פער בין התיעוד לקוד.
+- **שחרור בטוח של גרסאות**. בדיקה של רצף המיגרציות, קובצי סכמה שנוצרים אוטומטית ומושווים למסד
+  בתהליך ה־CI, ומנגנון אחד לבדיקות לפני שחרור גרסה.
 
-The stack is Next.js 16, React 19, TypeScript, Tailwind CSS 4 with shadcn on Base UI, Supabase
-(Postgres with row-level security, Auth), Zod, Vitest and Playwright, on pnpm and Node 24. The
-method does not depend on it; [AGENTS.md](AGENTS.md) keeps the stack-specific rules in one section.
+התבנית משתמשת ב־Next.js 16, ב־React 19, ב־TypeScript, ב־Tailwind CSS 4 עם shadcn על גבי
+Base UI, ב־Supabase (כולל Postgres עם אבטחה ברמת השורה ושירות Auth), ב־Zod, ב־Vitest
+וב־Playwright. סביבת העבודה מבוססת על pnpm ו־Node 24. שיטת העבודה מתאימה גם לטכנולוגיות
+אחרות. הכללים הייחודיים למחסנית הזו מרוכזים בסעיף אחד ב־[AGENTS.md](AGENTS.md).
 
-## Deploy your own
+## פריסה עצמאית
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSivan22%2Fagent-tdd-starter&project-name=agent-tdd-starter&repository-name=agent-tdd-starter&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
+[![פריסה באמצעות Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSivan22%2Fagent-tdd-starter&project-name=agent-tdd-starter&repository-name=agent-tdd-starter&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
 
-One click creates the whole stack: a copy of this repository in your GitHub account, a Vercel
-project that deploys every push to `main`, and a Supabase project from the Vercel Marketplace
-whose URL, keys and database address Vercel injects. The first production build applies the
-migrations to the new database. Three settings remain for you, all in
-[the deploy runbook](docs/runbooks/deploy.md): keep the Supabase variables out of preview
-deployments, point Supabase Auth at your URL, and choose whether sign-up needs email
-confirmation.
+לחיצה אחת מקימה את כל הסביבה. היא יוצרת עותק של המאגר בחשבון GitHub שלכם,
+פרויקט ב־Vercel שפורס כל שינוי שנדחף לענף `main`, ופרויקט Supabase דרך חנות האינטגרציות
+של Vercel. השירות Vercel מגדיר אוטומטית את כתובת הפרויקט, את המפתחות ואת כתובת מסד
+הנתונים. הבנייה הראשונה לסביבת הייצור מחילה את המיגרציות על המסד החדש.
 
-## The loop
+נותרו שלוש הגדרות לביצוע. יש להגדיר את משתני Supabase לסביבת הייצור בלבד, להפנות את
+Supabase Auth לכתובת היישום שלכם ולהחליט אם הרשמה מחייבת אימות בדוא״ל. ההוראות מופיעות
+ב[מדריך הפריסה](docs/runbooks/deploy.md).
 
-```text
- owner's ask
-     │
-     ▼
- scope in chat ──► worktree + branch (.worktrees/<nnn>-<slug>)
-                        │
-                        ▼
-                failing test (Vitest, RLS case, Playwright)  ◄──┐
-                        │                                       │
-                        ▼                                       │
-                code + migration until green                    │
-                        │                                       │
-                        ▼                                       │
-                checks for what changed + docs in same commit   │
-                        │                                       │
-                        ▼                                       │
-                hostile review + QA (fresh agents) ── FAIL ─────┘
-                        │ PASS
-                        ▼
-                push branch, open pull request, CI green
-                        │
-                        ▼
-                owner merges = release (ladder check, release gate)
+## תהליך העבודה
+
+<div dir="ltr">
+
+```mermaid
+flowchart TD
+    Request["בקשה מבעל הפרויקט"] --> Scope["הגדרת היקף בשיחה"]
+    Scope --> Branch["פתיחת ענף ועץ עבודה"]
+    Branch --> Test["בדיקה שנכשלת<br/>Vitest, RLS או Playwright"]
+    Test --> Implement["מימוש ומיגרציה עד שהבדיקה עוברת"]
+    Implement --> Checks["הרצת הבדיקות המתאימות ותיעוד באותו קומיט"]
+    Checks --> Review["סקירה ביקורתית ובקרת איכות בידי סוכנים חדשים"]
+    Review -->|נמצאו ליקויים| Test
+    Review -->|השינוי אושר| PR["דחיפת הענף, פתיחת בקשת מיזוג ובדיקות CI"]
+    PR --> Release["בעל הפרויקט ממזג ומשחרר גרסה<br/>בדיקת רצף המיגרציות ובדיקות שחרור"]
 ```
 
-## Quick start
+</div>
 
-Prerequisites: Node 24, pnpm 10, Docker, and the PostgreSQL client (`psql`), which the schema
-tools use.
+עץ העבודה נוצר בנתיב `.worktrees/<nnn>-<slug>`. המיזוג מתבצע אחרי שכל בדיקות ה־CI עוברות.
+
+## התחלה מהירה
+
+לפני שמתחילים, התקינו את Node 24, את pnpm 10, את Docker ואת `psql`, לקוח PostgreSQL
+שמשמש את כלי הסכמה.
+
+הריצו את הפקודות הבאות כדי להתקין את התלויות ואת Chromium לבדיקות מקצה לקצה,
+להפעיל את Postgres, את Auth ואת Studio מקומית, ליצור קובץ `.env` מהסביבה הפעילה
+ולהפעיל את שרת הפיתוח. הפורטים של Supabase מוגדרים ב־`supabase/config.toml`,
+והיישום זמין ב־`http://127.0.0.1:3000`.
+
+<div dir="ltr">
 
 ```bash
 pnpm install
-pnpm exec playwright install chromium   # the browser the e2e suite drives
-pnpm supabase start                     # local Postgres, Auth and Studio (ports in supabase/config.toml)
-bash scripts/local-env.sh               # writes .env from the running stack
-pnpm dev                                # http://127.0.0.1:3000
+pnpm exec playwright install chromium
+pnpm supabase start
+bash scripts/local-env.sh
+pnpm dev
 ```
 
-Run the checks:
+</div>
 
-| Command | What it does |
+להרצת הבדיקות השתמשו בפקודות הבאות.
+
+| פקודה | מה היא בודקת |
 | --- | --- |
-| `pnpm tsc --noEmit` | Typecheck |
-| `pnpm lint` | ESLint |
-| `pnpm test` | Vitest: unit, RLS policy cases and the documentation checker |
-| `E2E_PORT=3100 pnpm test:e2e` | Playwright, with its own dev server |
-| `pnpm db:check-schema` | The generated schema files match the database |
-| `pnpm docs:check` | The documentation rules |
-| `bash scripts/security/scan-secrets.sh` | Committed secrets, with a negative control |
-| `bash scripts/verify-release.sh <applied-mark>` | The release gate: migration ladder, released migrations unchanged, typecheck, lint, schema drift, Vitest and the production build |
+| `pnpm tsc --noEmit` | בדיקת טיפוסים |
+| `pnpm lint` | בדיקת קוד באמצעות ESLint |
+| `pnpm test` | בדיקות יחידה, מדיניות RLS וכללי התיעוד באמצעות Vitest |
+| `E2E_PORT=3100 pnpm test:e2e` | בדיקות מקצה לקצה באמצעות Playwright עם שרת פיתוח משלו |
+| `pnpm db:check-schema` | התאמה בין קובצי הסכמה שנוצרו אוטומטית למסד הנתונים |
+| `pnpm docs:check` | עמידה בכללי התיעוד |
+| `bash scripts/security/scan-secrets.sh` | איתור סודות שנשמרו בקומיטים, עם מקרה ביקורת שלילי |
+| `bash scripts/verify-release.sh <applied-mark>` | בדיקות שחרור הכוללות רצף מיגרציות, שמירה על מיגרציות שכבר שוחררו, בדיקת טיפוסים, ESLint, התאמת הסכמה למסד, Vitest ובנייה לסביבת הייצור |
 
-## Where to read next
+## המשך קריאה
 
-| You want to | Read |
+| מה תרצו לעשות | איפה לקרוא |
 | --- | --- |
-| Work in this repository, as an agent or a person | [AGENTS.md](AGENTS.md) |
-| Start your own project from this template | «Use this template» on GitHub, then [start a new project](docs/runbooks/new-project.md) |
-| See the worked example end to end | [Notes](docs/system/notes.md): `supabase/migrations/0001_notes.sql`, `tests/rls/notes.test.ts`, `tests/unit/note-input.test.ts`, `e2e/notes.spec.ts` |
-| Understand the documentation system | [The documentation index](docs/README.md) |
-| Run a hostile review | `.claude/agents/hostile-reviewer.md` |
-| Run the QA gate | [The QA runbook](docs/runbooks/qa.md) |
-| Release | [The release runbook](docs/runbooks/release.md) |
+| לעבוד במאגר, כסוכן או כמפתח | [AGENTS.md](AGENTS.md) |
+| לפתוח פרויקט משלכם מהתבנית | בחרו בכפתור «Use this template» ב־GitHub והמשיכו ל[מדריך לפתיחת פרויקט חדש](docs/runbooks/new-project.md) |
+| לעבור על הדוגמה המלאה | [פתקים](docs/system/notes.md), `supabase/migrations/0001_notes.sql`, `tests/rls/notes.test.ts`, `tests/unit/note-input.test.ts`, `e2e/notes.spec.ts` |
+| להבין איך התיעוד מאורגן | [מפתח התיעוד](docs/README.md) |
+| לערוך סקירה ביקורתית | `.claude/agents/hostile-reviewer.md` |
+| לערוך בקרת איכות | [מדריך בקרת האיכות](docs/runbooks/qa.md) |
+| לשחרר גרסה | [מדריך שחרור גרסה](docs/runbooks/release.md) |
 
-## What is in the box
+## מבנה המאגר
 
-| Path | Holds |
+| נתיב | מה נמצא בו |
 | --- | --- |
-| `AGENTS.md`, `CLAUDE.md` | The working rules every agent reads first |
-| `.claude/agents/hostile-reviewer.md` | The adversarial reviewer's brief |
-| `.claude/agents/qa-tester.md` | The QA agent's brief |
-| `.github/workflows/ci.yml` | CI: secret scan, dependency audit, and every check against a throwaway Supabase stack |
-| `.github/pull_request_template.md` | The evidence a pull request carries |
-| `docs/` | System documents, decisions, runbooks, reference, schema files, templates |
-| `scripts/docs/` | `docs:check`, `docs:gen` and `docs:owed` |
-| `scripts/qa/` | `qa:host`: the application and a real browser, held open for the QA agent |
-| `scripts/*.sh` | Migration ladder, schema generation and drift, `.env` writer, release gate |
-| `app/`, `components/`, `lib/` | The example app: sign in, private notes |
-| `supabase/` | Local stack configuration and numbered migrations |
-| `tests/`, `e2e/` | Vitest and Playwright suites |
+| `AGENTS.md`, `CLAUDE.md` | כללי העבודה שכל סוכן קורא לפני תחילת העבודה |
+| `.claude/agents/hostile-reviewer.md` | הנחיות לסוכן הסקירה הביקורתית |
+| `.claude/agents/qa-tester.md` | הנחיות לסוכן בקרת האיכות |
+| `.github/workflows/ci.yml` | תהליך CI שכולל סריקת סודות, ביקורת תלויות והרצת כל הבדיקות מול סביבת Supabase זמנית |
+| `.github/pull_request_template.md` | תבנית לצירוף תוצאות בדיקה וממצאים לבקשת מיזוג |
+| `docs/` | מסמכי מערכת, החלטות, מדריכי תפעול, חומר עזר, קובצי סכמה ותבניות |
+| `scripts/docs/` | הפקודות `docs:check`, `docs:gen` ו־`docs:owed` |
+| `scripts/qa/` | הפקודה `qa:host`, שמפעילה את היישום ודפדפן אמיתי ומשאירה אותם פתוחים לסוכן בקרת האיכות |
+| `scripts/*.sh` | בדיקות לרצף המיגרציות, יצירת קובצי סכמה ובדיקת התאמתם למסד, יצירת `.env` ובדיקות שחרור גרסה |
+| `app/`, `components/`, `lib/` | יישום לדוגמה עם התחברות ופתקים פרטיים |
+| `supabase/` | הגדרות לסביבה המקומית ומיגרציות ממוספרות |
+| `tests/`, `e2e/` | בדיקות Vitest ו־Playwright |
 
-## License
+## רישיון
 
 [MIT](LICENSE)
+
+</div>

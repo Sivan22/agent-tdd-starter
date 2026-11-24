@@ -19,7 +19,7 @@ is the [release runbook](release.md).
 
 ## Steps
 
-1. Click «Deploy with Vercel» in the [README](../../README.md#deploy-your-own). Vercel asks for:
+1. Click «Deploy with Vercel» in the [README](../../README.md#פריסה-עצמאית). Vercel asks for:
    - the Git scope and repository name: it creates the repository in your GitHub account;
    - the Supabase project: name and region. The integration creates it and adds its variables
      to the Vercel project, among them `NEXT_PUBLIC_SUPABASE_URL`,
